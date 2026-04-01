@@ -1,0 +1,18 @@
+{
+  "ats": "Bullhorn",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+  "candidateIngestion": "SUPPORTED",
+  "stageWrite": "SUPPORTED",
+
+  "issues": [
+    "CRITICAL SECURITY: BhRestToken hardcoded as '28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9' in multiple response handler jsonataConvertorExpressions — rotate immediately",
+    "CRITICAL SECURITY: restUrl hardcoded as 'https://rest44.bullhornstaffing.com/rest-services/dkixnd/' in response handlers — exposes tenant-specific endpoint",
+    "CRITICAL SECURITY: bullhorn_customer_integration_config.json contains plaintext password and client_secret in additionalParams — must be rotated and stored securely",
+    "JOB: url falls back to literal string 'string' instead of null when jobPostingURL is empty — downstream url field will contain garbage value",
+    "JOB: updatedAt uses $now() instead of dateLastModified — breaks downstream delta detection",
+    "APPLICATION_STAGE: stageId and stageName are both set to the status string (not a numeric ID) — may cause stage de-duplication issues"
+  ]
+}

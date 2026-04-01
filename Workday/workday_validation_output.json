@@ -1,0 +1,19 @@
+{
+  "ats": "Workday",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "PARTIAL",
+  "candidateIngestion": "NOT SUPPORTED",
+  "jobQuestions": "SUPPORTED",
+  "getJobInfo": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION_STAGE: dataModelJsonataExpression is a placeholder '${transformStageJsonataExpression}' — stage mapping not implemented; funnel tracking will produce no output",
+    "JOB: No dateRangeConfig — full catalog fetched via SOAP on every sync cycle (no incremental delta sync)",
+    "CANDIDATE: No READ integration defined — candidate ingestion is not supported",
+    "APPLICATION WRITE: Uses dual auth (WS-Security SOAP username/password + OAuth2 Bearer) — added complexity; password embedded in XML body",
+    "JOB: SOAP response requires XML→JSON conversion; location data maps only city from Location_ID (no state/country/postalCode)",
+    "AUTH: customerAuthType is NO_AUTH — all credentials passed inline in SOAP XML headers and request body fields (user_name, password, tenant, clientId, clientSecret, refreshToken)"
+  ]
+}

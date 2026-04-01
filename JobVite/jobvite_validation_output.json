@@ -1,0 +1,15 @@
+{
+  "ats": "JobVite",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "SECURITY: hardcoded API keys in integration headers (x-jvi-sc, x-jvi-api) — must be rotated immediately",
+    "APPLICATION_STAGE: stageName equals raw stageId (newValue from webhook) — no human-readable label mapping",
+    "APPLICATION_STAGE: atsJobId enriched via GET candidate API (failSilently:true) — may be null in stage records",
+    "JOB REST_API: insertedAt mapped to lastUpdatedDate (not $now()) — non-standard pattern",
+    "CANDIDATE REST_API: no dateRangeConfig — full catalog re-ingested every sync"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "ats": "UKG",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION_STAGE READ: 4-step N+1 API chain per application — significant performance concern at scale",
+    "APPLICATION WRITE: hardcoded applicantSource UUID 'ee9e2991-ee55-42a3-add6-6dad8110810a' — tenant-specific value",
+    "APPLICATION WRITE: requires availableStartDate in customFields — gated mandatory field",
+    "WRITE_API_RESPONSE_HANDLER: contains hardcoded tenant URL 'https://service2.ultipro.com/.../SAL1014SAMN/...' — not portable across customers",
+    "JOB: no paginationConfig — truncation risk for large job catalogs",
+    "APPLICATION WRITE: dual application create paths (ukg-create-applications-one, ukg-create-applications-two) — selection logic unclear"
+  ]
+}

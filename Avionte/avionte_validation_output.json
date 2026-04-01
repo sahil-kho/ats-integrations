@@ -1,0 +1,16 @@
+{
+  "ats": "Avionte",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "PARTIAL",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION_STAGE WEBHOOK: dataModelRules use string concatenation of camelCase and PascalCase field variants (eventName & EventName) — brittle logic on partial payloads",
+    "APPLICATION_STAGE: nominationId and pipelineId extracted via raw JSON string parsing (substringBefore/substringAfter) — extremely fragile",
+    "APPLICATION_STAGE: lastUpdatedDate falls back to $now() when field is absent — temporal data loss",
+    "All API paths include absolute base URL (https://api.avionte.com) instead of using customerBaseUrl — non-standard pattern",
+    "Requires custom Tenant and x-api-key headers per request — must be configured in customerStaticValues",
+    "Nomination and pipeline events each trigger separate 2-step API chains — N+2 calls per webhook event, performance concern at scale"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "ats": "Ashby",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "NOT_SUPPORTED",
+
+  "issues": [
+    "JOB read is webhook-only — no REST_API polling; jobs not synced until webhook fires",
+    "JOB description, locations, department, status enriched via secondary API (failSilently:true) — may be missing on enrichment failure",
+    "CANDIDATE list: firstName/lastName derived by splitting name on first space — fails for middle names or single-token names",
+    "CANDIDATE list: no dateRangeConfig — full catalog sync every run",
+    "APPLICATION WRITE: depends on candidateId from prior CANDIDATE WRITE chain — tight coupling between write flows",
+    "No APPLICATION_STAGE ingestion configured — funnel tracking not supported"
+  ]
+}

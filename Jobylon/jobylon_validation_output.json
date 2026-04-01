@@ -1,0 +1,16 @@
+{
+  "ats": "Jobylon",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "PARTIAL",
+
+  "issues": [
+    "APPLICATION_STAGE WEBHOOK: appliedAt, createdDate, and lastUpdatedDate all hardcoded to $now() — real event timestamps not captured",
+    "JOB: failSilently:true on main job fetch — failures silently swallowed",
+    "JOB: no pagination, no dateRangeConfig — full catalog re-ingested every sync",
+    "APPLICATION WRITE: uses attachmentLocalPath (a URL) instead of base64 content — requires file to be pre-uploaded externally",
+    "Auth: NO_AUTH on customer config; relies on per-integration static X-App-Key/X-App-Id headers — no centralized auth",
+    "JOB_QUESTION: form fields fetched per-job via N+1 API call pattern — performance concern at scale"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "ats": "Talos-360",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "NOT_SUPPORTED",
+
+  "issues": [
+    "APPLICATION WRITE: source hardcoded as 'Indeed' — not Joveo-branded",
+    "APPLICATION WRITE: applicationId and candidateId both set to candidate email — not real system IDs",
+    "JOB: no paginationConfig — truncation risk for large job catalogs",
+    "JOB: no dateRangeConfig — full catalog re-ingested every sync",
+    "JOB: status hardcoded 'OPEN' — no closed job tracking",
+    "No APPLICATION_STAGE configured — funnel tracking not available",
+    "Auth uses HMAC signature in Authorization header — non-standard pattern that must be maintained precisely"
+  ]
+}

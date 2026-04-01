@@ -1,0 +1,17 @@
+{
+  "ats": "Eyrecruit",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "NOT_SUPPORTED",
+  "funnelTracking": "NOT_SUPPORTED",
+
+  "issues": [
+    "JOB only — no application write or funnel tracking configured",
+    "JOB: no paginationConfig — truncation risk for large job catalogs",
+    "JOB: no dateRangeConfig — full catalog re-ingested every sync",
+    "JOB: lastUpdatedDate not mapped — only createdDate available (from published_at)",
+    "JOB: status hardcoded 'OPEN' — no CLOSED job tracking",
+    "Base URL uses HTTP not HTTPS (http://recruitment.eylog.co.uk) — insecure transport",
+    "JOB: refNumber mapped from job_id (same as atsJobId) — no meaningful distinction"
+  ]
+}

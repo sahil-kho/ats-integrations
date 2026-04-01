@@ -1,0 +1,16 @@
+{
+  "ats": "Fountain",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION WRITE: candidateId returned as null — only applicationId is populated",
+    "JOB: no dateRangeConfig — full catalog re-ingested every sync",
+    "JOB: lastUpdatedDate mapped from created_at (not actual last-modified timestamp)",
+    "APPLICATION WRITE: phone number is required for submission but may not always be available",
+    "APPLICATION WRITE: 4-step S3 resume upload chain — mid-chain failure may leave partial application state",
+    "Auth handled via per-integration API key headers — no central customerAuthInfo on customer config"
+  ]
+}

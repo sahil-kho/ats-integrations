@@ -1,0 +1,16 @@
+{
+  "ats": "SmartRecruiters",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION WRITE: fails if posting UUID not found — execution gated on response.uuid from prior step",
+    "APPLICATION_STAGE: stageId = concat(status + '_' + createDate) — may cause deduplication issues on date collisions",
+    "APPLICATION WRITE: hardcoded sourceTypeId 'ORGANIC', sourceSubTypeId 'SMARTRECRUITERS', and default sourceId UUID — not configurable per customer",
+    "JOB_QUESTION: large inline $eval() JSONata with hardcoded phone country list — maintenance risk",
+    "APPLICATION_STAGE: uses versioned API path /job-applications-api/v202112/ — may require updates on API version changes",
+    "Dual auth (OAUTH_2 + API_KEY) on APPLICATION WRITE — authentication complexity"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "ats": "Asymbl",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION WRITE: firstStageId fallback uses hardcoded Salesforce ID 'a06bn00000DStwZAAT' — client-specific value",
+    "APPLICATION WRITE: response handler references chain variable 'assymbl_contact_create[0].candidateId' — typo risk if integration ID differs",
+    "JOB and APPLICATION_STAGE: insertedAt/updatedAt use $now() rather than actual record timestamps",
+    "APPLICATION_STAGE READ: stageId mapped directly from Salesforce Status__c field — no human-readable label translation",
+    "API paths reference hardcoded Salesforce tenant 'asymbl-joveo-tso.my.salesforce.com' — not portable across customers"
+  ]
+}

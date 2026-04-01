@@ -1,0 +1,17 @@
+{
+  "ats": "Dayforce",
+
+  "jobIngestion": "PARTIAL",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "NOT_SUPPORTED",
+
+  "issues": [
+    "JOB: no paginationConfig — truncation risk for large job catalogs",
+    "JOB: no dateRangeConfig — full catalog re-ingested every sync",
+    "JOB: status hardcoded 'OPEN' — closed jobs never tracked",
+    "APPLICATION WRITE: candidateId and applicationId both return the same Identifier field — not distinct",
+    "APPLICATION WRITE: questionnaire fetch relies on customFields.questionSetId — gated requirement",
+    "OAuth2 uses password grant type — less secure; credentials included in token request",
+    "No APPLICATION_STAGE support — funnel tracking not available"
+  ]
+}

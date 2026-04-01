@@ -1,0 +1,19 @@
+{
+  "ats": "Greenhouse",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+  "candidateIngestion": "SUPPORTED",
+  "attachmentTracking": "SUPPORTED",
+  "stageWrite": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION WRITE: WRITE_API_RESPONSE_HANDLER references 'pinpoint_update_application_stage' variable (copy-paste bug — should be greenhouse_application_stage_post)",
+    "APPLICATION WRITE: Response does not return candidateId or applicationId — both set to null in response handler",
+    "APPLICATION WRITE: Hardcoded On-Behalf-Of user ID 4052730008 in write integrations",
+    "APPLICATION WEBHOOK: atsJobId falls back to literal 'tempJobId' when jobs array is empty",
+    "JOB WEBHOOK: url not present in webhook payload — enriched via secondary job board API call (failSilently:true, may be missing)",
+    "CANDIDATE WRITE: uses NO_AUTH with manually constructed BASIC Authorization header — auth type mismatch"
+  ]
+}

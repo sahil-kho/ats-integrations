@@ -1,0 +1,15 @@
+{
+  "ats": "Cornerstone",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+
+  "issues": [
+    "APPLICATION_STAGE READ: date parsing uses MM/DD/YYYY split logic — falls back to $now() on unexpected format",
+    "WRITE_API_RESPONSE_HANDLER: returns null for both candidateId and applicationId if success check fails",
+    "APPLICATION, APPLICATION_STAGE, CANDIDATE READ: no dateRangeConfig — filters by hardcoded status list; historical records re-ingested every sync",
+    "APPLICATION WRITE: hardcoded source label 'cornerstoneId' in request body — not configurable per customer",
+    "JOB WEBHOOK: triggers full job fetch without delta filter — may re-ingest unchanged records"
+  ]
+}

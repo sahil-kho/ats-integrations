@@ -1,0 +1,17 @@
+{
+  "ats": "Eploy",
+
+  "jobIngestion": "SUPPORTED",
+  "applicationApply": "SUPPORTED",
+  "funnelTracking": "SUPPORTED",
+  "candidateIngestion": "SUPPORTED",
+  "stageWrite": "SUPPORTED",
+
+  "issues": [
+    "JOB: No paginationConfig — uses fixed RecordsPerPage:500 in request body; catalogs >500 jobs may be silently truncated",
+    "JOB: No dateRangeConfig — full catalog fetched on every sync cycle (no incremental/delta support)",
+    "JOB: updatedAt mapped to $now() instead of ModificationDate — downstream delta detection unreliable",
+    "APPLICATION_STAGE READ: Per-candidate GET fanout (eploy-get-candidate-email-integration) causes N+1 API calls at scale",
+    "APPLICATION_STAGE WRITE: 4-step lookup chain (options → stage types → vacancy status → PATCH) adds latency and failure points"
+  ]
+}
