@@ -1,0 +1,389 @@
+[
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "apploi-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://partners.apploi.com",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "apploi-application-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": " $exists(inputData.candidate.email) and inputData.candidate.email != null and (($exists(inputData.candidate.customFields.fullName) and inputData.candidate.customFields.fullName != null) or ($exists(inputData.candidate.firstName) and inputData.candidate.firstName!= null))   and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "apploi-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fullName",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.fullName)?inputData.candidate.customFields.fullName:inputData.candidate.firstName& \" \"&inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "$exists(inputData.candidate.phoneNumber)?inputData.candidate.phoneNumber:inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.application.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "content",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contentType",
+                "jsonataExpression": "inputData.application.attachment.attachmentContentType",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://partners.apploi.com/easy-apply",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"applicant\": {\"email\": \"${email}\",\"fullName\":\"${fullName}\",\"phoneNumber\": \"${phoneNumber}\",\"resume\": {\"file\": {\"fileName\": \"${fileName}\",\"contentType\": \"${contentType}\",\"data\":\"${content}\"}}},\"job\": {\"jobId\":\"${jobId}\"}}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(info.person_id) and $exists(info.job_id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": $string(info.person_id),\"applicationId\": $string(info.person_id) &\"-\" & info.job_id, \"customFields\":{\"jobId\": info.job_id}}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(developerMessage) and $exists(errors.application_form_id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"error\":{\"message\":$string(developerMessage) & \"ApplicationId -- \"  & $string(errors.application_form_id)}}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(developerMessage)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"error\":{\"message\":$string(developerMessage)}}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and (($exists(inputData.candidate.customFields.fullName) and inputData.candidate.customFields.fullName != null) or ($exists(inputData.candidate.firstName) and inputData.candidate.firstName!= null))   and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "apploi-get-job-post-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($entities) {\r\n      {\r\n      \"atsJobId\": $entities.id,\r\n      \"refNumber\": $entities.id,\r\n      \"description\": $entities.description,\r\n      \"url\": $exists($entities.redirect_apply_url) ? $entities.redirect_apply_url : null,\r\n      \"title\": $entities.name,\r\n     \r\n      \"status\": $exists($entities.published)\r\n        ? ($entities.published = true ? \"OPEN\" : \"CLOSED\")\r\n        : \"DRAFTED\",\r\n      \"remoteType\": $entities.job_type,\r\n      \"department\": $entities.industry,\r\n      \"company\": $entities.brand_name,\r\n      \"locations\": [{\r\n  \"city\": $entities.city,\r\n  \"state\": $entities.state,\r\n  \"country\":$split($entities.address, \",\")[-1],\r\n  \"isPrimary\": true\r\n      }],\r\n      \"insertedAt\": $now(),\r\n      \"updatedAt\": $now(),\r\n      \"startDate\": $entities.published_date!=null?$fromMillis($toMillis($entities.published_date)):null,\r\n      \"createdDate\": $entities.published_date!=null?$fromMillis($toMillis($entities.published_date)):null\r\n    }\r\n  }\r\n)]\r\n",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/jobs/search",
+          "headers": {},
+          "queryParams": {
+            "teams": "${teamId}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "apploi-get-application-stages",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($stage) { { \"atsApplicationStageId\": $stage.id, \"atsApplicationStageName\": $stage.name, \"insertedAt\": $now(), \"updatedAt\": $now(), \"createdDate\": $stage.date_created != null ? $fromMillis($toMillis($stage.date_created)) : null, \"lastUpdatedDate\": $stage.last_update != null ? $fromMillis($toMillis($stage.last_update)) : null, \"customFields\": { \"creatorId\": $stage.creator_id, \"lastModifiedId\": $stage.last_modified_id, \"teamId\": $stage.team_id, \"statusCategory\": $stage.status_category, \"editable\": $stage.editable, \"readOnly\": $stage.read_only, \"isEditable\": $stage.editable = \"true\", \"isReadOnly\": $stage.read_only = \"true\" } } })]",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/applicants/applicant-statuses",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "team_id": "${teamId}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(data) and $count(data) > 0"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"stagesCount\": $count(data), \"status\": \"success\" }"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"errorMessage\": \"Integration not executed\" }"
+            }
+          ],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "apploi-candidate-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://partners.apploi.com",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateIdPost :=apploi_application_submission[0].candidateId;$applicationId:=apploi_application_submission[0].applicationId;$customFields := apploi_application_submission[0].customFields;  $exists($candidateIdPost) ?   {    \"data\": {      \"candidateId\": $string($candidateIdPost),\"applicationId\": $string($applicationId),    \"customFields\": $customFields},    \"errors\": null  } :{    \"data\": null,    \"errors\": [{\"errorCode\":null, \"errorType\":null, \"message\":$string($), \"params\":{}}]  })"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  

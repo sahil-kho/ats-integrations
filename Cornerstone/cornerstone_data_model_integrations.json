@@ -1,0 +1,1146 @@
+[
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-application-stages-demo",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobRequisitionDetails?Page=1&PageSize=1",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US",
+            "ToDate": "${endDateTime}",
+            "FromDate": "${startDateTime}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"message\": \"Mock API call to support dependency fields for next integration.\"}"
+            }
+          ],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-application-stages",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append(\r\n  [],\r\n  $map(\r\n    $filter($, function($st) {\r\n      $exists($st.Id) and $st.Id != null and $st.CsodGUID != null and $st.RequisitionId != null\r\n    }),\r\n    function($st) {\r\n      { \r\n        \"atsJobId\": $st.RequisitionId,\r\n        \"atsCandidateId\": $st.CsodGUID,\r\n        \"atsApplicationId\": $string($st.Id),\r\n        \"stageId\": $st.Status != null and $st.Status != \"\" ? $st.Status : \"New Submission\",\r\n        \"stageName\": $st.Status != null and $st.Status != \"\" ? $st.Status : \"New Submission\",\r\n\r\n        \"appliedAt\":\r\n          $st.ApplicationReceivedDateLocal != null and\r\n          $st.ApplicationReceivedDateLocal != \"\" and\r\n          $st.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($st.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($st.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          $now(),\r\n\r\n        \"createdDate\":\r\n          $st.ApplicationReceivedDateLocal != null and\r\n          $st.ApplicationReceivedDateLocal != \"\" and\r\n          $st.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($st.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($st.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"lastUpdatedDate\":\r\n          $st.ApplicationReceivedDateLocal != null and\r\n          $st.ApplicationReceivedDateLocal != \"\" and\r\n          $st.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($st.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($st.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($st.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($st.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($st.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"insertedAt\": $now(),\r\n        \"updatedAt\": $now(),\r\n\r\n        \"customFields\": {\r\n          \"name\": $st.Name,\r\n          \"email\": $st.Email,\r\n          \"source\": $st.Source,\r\n          \"userId\": $st.UserId,\r\n          \"csodGuid\": $st.CsodGUID,\r\n          \"lastName\": $st.LastName,\r\n          \"username\": $st.Username,\r\n          \"firstName\": $st.FirstName,\r\n          \"candidateType\": $st.CandidateType,\r\n          \"currentStatus\": $st.Status != null and $st.Status != \"\" ? $st.Status : \"New Submission\",\r\n          \"jobRequisitionId\": $st.JobRequisitionId\r\n        }\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-get-application-stages-demo",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "CurrentStatus",
+                "jsonataExpression": "[\"New Submission\", \"In Review\", \"Phone Screening\", \"Interview\", \"Background Check\", \"Offer Letter\", \"Closed\", \"Hired\"]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobApplicant?CurrentStatus=${CurrentStatus}",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "PageSize",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "Page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-create-application-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-create-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-create-application-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/x/candidate/v1/application",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \n    \"jobRequisitionId\": \"${reqId}\", \n    \"candidate\": { \n        \"email\": inputData.candidate.email, \n        \"firstName\": inputData.candidate.firstName, \n        \"lastName\": inputData.candidate.lastName, \n        \"contactDetails\": { \n            \"PhoneNumber\": ($exists(inputData.candidate.phoneNumbers) and $count(inputData.candidate.phoneNumbers) > 0) ? inputData.candidate.phoneNumbers[0].phoneNumber : \"\", \n            \"city\": $exists(inputData.candidate.address.city) ? inputData.candidate.address.city, \n            \"state\": $exists(inputData.candidate.address.state) ? inputData.candidate.address.state, \n            \"postalCode\": $exists(inputData.candidate.address.postalCode) ? inputData.candidate.address.postalCode, \n            \"country\": $exists(inputData.candidate.customFields.countryCode) ? inputData.candidate.customFields.countryCode \n        } \n    }, \n    \"source\": { \n        \"submissionSource\": \"Joveo\", \n        \"submissionSourceName\": ( \n            $medium := inputData.candidate.customFields.medium; \n            $interface := inputData.candidate.customFields.mediumInterface; \n             \n            ($medium = \"CONVERSATIONAL\" and $interface = \"WEB_CHATBOT\") ? \"Joveo Chatbot\" : \n            ($medium = \"CONVERSATIONAL\" and $interface = \"SMS\") ? \"Joveo SMS\" : \n            ($medium = \"CONVERSATIONAL\" and $interface = \"EMAIL\") ? \"Joveo Email\" : \n            ($medium = \"CONVERSATIONAL\" and $interface = \"WHATSAPP\") ? \"Joveo WhatsApp\" : \n            ($medium = \"FORM\" and $interface = \"WEB_CHATBOT\") ? \"Joveo Form\" : \n            ($medium = \"EASY_APPLY\" and $interface = \"WEB_CHATBOT\") ? \"Joveo Easy Apply\" : \n            \"Joveo Products\" \n        ) \n    }, \n    \"questions\": ( \n        $getAnswerObjs := function($questions) { \n            ( \n                $questionIds := $keys($questions); \n                $map($questionIds, function($id) { \n                    ( \n                        $parts := $split($id, \"_Question_\"); \n                        $qId := $parts[0]; \n                        $qType := $count($parts) > 1 ? $parts[1] : \"Prescreening\"; \n                        { \n                            \"type\": $qType, \n                            \"id\": $qId, \n                            \"response\": $join([$lookup($questions, $id)], \",\") \n                        } \n                    ) \n                }) \n            ) \n        }; \n        $questionAnswers := $exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields : {}; \n        $getAnswerObjs($questionAnswers) \n    ), \n    \"resume\": ($exists(inputData.application.attachment) and inputData.application.attachment != null) ? { \n        \"file\": inputData.application.attachment.attachmentContent, \n        \"fileName\": inputData.application.attachment.attachmentFileName \n    } \n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 202,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(data.candidateId) and $exists(data.applicationId)"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-application-stage-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $cornerstoneResult := cornerstone_application_stage_submission[0]; $exists($cornerstoneResult) ? { \"data\": { \"candidateId\": null, \"applicationId\": null }, \"errors\": [] } : { \"data\": null, \"errors\": [{ \"errorCode\": null, \"errorType\": null, \"message\": $string($), \"params\": {} }] } )"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-all-job-reqs",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append(\r\n  [],\r\n  $map(\r\n    $filter($, function($job) {\r\n      $exists($job.Id) and $job.Id != null and $job.Ref != null\r\n    }),\r\n    function($job) {\r\n      {\r\n        \"atsJobId\": $job.Ref,\r\n        \"refNumber\": $job.Ref,\r\n        \"title\": $job.Title,\r\n        \"description\": \"<h2>Description</h2>\" & $job.ExternalDescription & (\r\n            $count($job.JobResponsibilities) > 0 ?\r\n                \"<h2>Responsibilities</h2><ul>\" &\r\n                $join(\r\n                $map($job.JobResponsibilities, function($responsibility) {\r\n                    \"<li>\" & $responsibility.Responsibility & \"</li>\"\r\n                }),\r\n                \"\"\r\n                ) & \"</ul>\"\r\n            : \"\"\r\n        ),\r\n        \"url\": $job.DefaultURL,\r\n        \"locations\": [\r\n            {\r\n                \"isPrimary\": true,\r\n                \"city\": $job.AddressDetails.City,\r\n                \"state\": $job.AddressDetails.State,\r\n                \"country\": $job.AddressDetails.Country,\r\n                \"postalCode\": $job.AddressDetails.PostalCode,\r\n                \"customFields\": {}\r\n            }\r\n        ],\r\n        \"department\": $job.Division,\r\n        \"status\": $job.Status='Open' ? \"OPEN\" : \"CLOSED\",\r\n        \"positionCategory\": $job.Division,\r\n        \"remoteType\": $job.EmploymentType,\r\n        \"company\": $job.Division,\r\n        \"recruiters\": [],\r\n        \"hiringManagers\": $job.HiringManager != null ? [$job.HiringManager.Name] : [],\r\n        \"createdDate\":\r\n            $job.CreateDateLocal != null and $job.CreateDateLocal != \"\" and $count($split($job.CreateDateLocal, \"/\")) = 3 and $split($job.CreateDateLocal, \"/\")[0] != \"\" and $split($job.CreateDateLocal, \"/\")[1] != \"\" and $split($job.CreateDateLocal, \"/\")[2] != \"\" and $number($split($job.CreateDateLocal, \"/\")[0]) > 0 and $number($split($job.CreateDateLocal, \"/\")[0]) <= 12 and $number($split($job.CreateDateLocal, \"/\")[1]) > 0 and $number($split($job.CreateDateLocal, \"/\")[1]) <= 31 and $number($split($job.CreateDateLocal, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.CreateDateLocal, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.CreateDateLocal, \"/\")[0]) < 10 ? \"0\" & $split($job.CreateDateLocal, \"/\")[0] : $split($job.CreateDateLocal, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.CreateDateLocal, \"/\")[1]) < 10 ? \"0\" & $split($job.CreateDateLocal, \"/\")[1] : $split($job.CreateDateLocal, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"lastUpdatedDate\":\r\n            $job.LastModificationDate != null and $job.LastModificationDate != \"\" and $count($split($job.LastModificationDate, \"/\")) = 3 and $split($job.LastModificationDate, \"/\")[0] != \"\" and $split($job.LastModificationDate, \"/\")[1] != \"\" and $split($job.LastModificationDate, \"/\")[2] != \"\" and $number($split($job.LastModificationDate, \"/\")[0]) > 0 and $number($split($job.LastModificationDate, \"/\")[0]) <= 12 and $number($split($job.LastModificationDate, \"/\")[1]) > 0 and $number($split($job.LastModificationDate, \"/\")[1]) <= 31 and $number($split($job.LastModificationDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.LastModificationDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.LastModificationDate, \"/\")[0]) < 10 ? \"0\" & $split($job.LastModificationDate, \"/\")[0] : $split($job.LastModificationDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.LastModificationDate, \"/\")[1]) < 10 ? \"0\" & $split($job.LastModificationDate, \"/\")[1] : $split($job.LastModificationDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"startDate\":\r\n            $job.DefaultEffectiveDate != null and $job.DefaultEffectiveDate != \"\" and $count($split($job.DefaultEffectiveDate, \"/\")) = 3 and $split($job.DefaultEffectiveDate, \"/\")[0] != \"\" and $split($job.DefaultEffectiveDate, \"/\")[1] != \"\" and $split($job.DefaultEffectiveDate, \"/\")[2] != \"\" and $number($split($job.DefaultEffectiveDate, \"/\")[0]) > 0 and $number($split($job.DefaultEffectiveDate, \"/\")[0]) <= 12 and $number($split($job.DefaultEffectiveDate, \"/\")[1]) > 0 and $number($split($job.DefaultEffectiveDate, \"/\")[1]) <= 31 and $number($split($job.DefaultEffectiveDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.DefaultEffectiveDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.DefaultEffectiveDate, \"/\")[0]) < 10 ? \"0\" & $split($job.DefaultEffectiveDate, \"/\")[0] : $split($job.DefaultEffectiveDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.DefaultEffectiveDate, \"/\")[1]) < 10 ? \"0\" & $split($job.DefaultEffectiveDate, \"/\")[1] : $split($job.DefaultEffectiveDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"endDate\":\r\n            $job.DefaultExpirationDate != null and $job.DefaultExpirationDate != \"\" and $count($split($job.DefaultExpirationDate, \"/\")) = 3 and $split($job.DefaultExpirationDate, \"/\")[0] != \"\" and $split($job.DefaultExpirationDate, \"/\")[1] != \"\" and $split($job.DefaultExpirationDate, \"/\")[2] != \"\" and $number($split($job.DefaultExpirationDate, \"/\")[0]) > 0 and $number($split($job.DefaultExpirationDate, \"/\")[0]) <= 12 and $number($split($job.DefaultExpirationDate, \"/\")[1]) > 0 and $number($split($job.DefaultExpirationDate, \"/\")[1]) <= 31 and $number($split($job.DefaultExpirationDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.DefaultExpirationDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.DefaultExpirationDate, \"/\")[0]) < 10 ? \"0\" & $split($job.DefaultExpirationDate, \"/\")[0] : $split($job.DefaultExpirationDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.DefaultExpirationDate, \"/\")[1]) < 10 ? \"0\" & $split($job.DefaultExpirationDate, \"/\")[1] : $split($job.DefaultExpirationDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"isDeleted\": $job.Status='Cancelled' or $job.Status='Closed',\r\n        \"insertedAt\": $now(),\r\n        \"updatedAt\": $now(),\r\n        \"customFields\": {}\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobRequisitionDetails",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US",
+            "lastModifiedSince": "${startDateTime}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "PageSize",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "Page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-candidates-demo",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobRequisitionDetails?Page=1&PageSize=1",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US",
+            "ToDate": "${endDateTime}",
+            "FromDate": "${startDateTime}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"message\": \"Mock API call to support dependency fields for next integration.\"}"
+            }
+          ],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-candidates",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append(\r\n  [],\r\n  $map(\r\n    $filter($, function($cd) {\r\n      $exists($cd.Id) and $cd.Id != null and $cd.Email != null\r\n    }),\r\n    function($cd) {\r\n      {\r\n        \"atsCandidateId\": $cd.CsodGUID,\r\n        \"firstName\": $cd.FirstName,\r\n        \"lastName\": $cd.LastName,\r\n        \"email\": $cd.Email,\r\n        \"phoneNumbers\": [\r\n          {\r\n            \"isPrimary\": true,\r\n            \"phoneNumber\": $cd.Phone,\r\n            \"countryCode\": null,\r\n            \"customFields\": {}\r\n          }\r\n        ],\r\n        \"address\": {\r\n          \"city\": $cd.City,\r\n          \"state\": $cd.State,\r\n          \"country\": $cd.Country,\r\n          \"postalCode\": $cd.PostalCode,\r\n          \"customFields\": {\r\n            \"addressLine1\": $cd.AddressLine1,\r\n            \"addressLine2\": $cd.AddressLine2\r\n          }\r\n        },\r\n        \"canEmail\": true,\r\n        \"links\": [],\r\n        \"workExperience\": [],\r\n        \"education\": [],\r\n        \"createdDate\":\r\n          $cd.ApplicationReceivedDateLocal != null and\r\n          $cd.ApplicationReceivedDateLocal != \"\" and\r\n          $cd.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($cd.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($cd.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"lastUpdatedDate\":\r\n          $cd.ApplicationReceivedDateLocal != null and\r\n          $cd.ApplicationReceivedDateLocal != \"\" and\r\n          $cd.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($cd.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($cd.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($cd.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($cd.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($cd.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"updatedAt\": $now(),\r\n        \"insertedAt\": $now(),\r\n        \"customFields\": {\r\n          \"candidateType\": $cd.CandidateType,\r\n          \"userId\": $cd.UserId,\r\n          \"username\": $cd.Username,\r\n          \"thumbImgUrl\": $cd.ThumbImgUrl,\r\n          \"ethnicity\": $cd.Ethnicity,\r\n          \"gender\": $cd.Gender,\r\n          \"homePhone\": $cd.HomePhone\r\n        }\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-get-candidates-demo",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "CurrentStatus",
+                "jsonataExpression": "[\"New Submission\", \"In Review\", \"Phone Screening\", \"Interview\", \"Background Check\", \"Offer Letter\", \"Closed\", \"Hired\"]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobApplicant?CurrentStatus=${CurrentStatus}",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "PageSize",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "Page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB_QUESTION",
+      "integrationType": "REST_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-application-wf-to-joveo-questions",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/x/rec-job-requisition/v1/requisition/${reqId}/application-workflow",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n    \"data\": {\"questions\": {\"additionalQuestions\": [(\n    $inputType:= function($responseType) {\n        $responseType='Boolean' ? 'RADIO' : $responseType='MultipleChoiceMultipleAnswer' ? 'SELECT' : $responseType='MultipleChoiceSingleAnswer' ? 'SELECT' : $responseType='Text' ? 'TEXT' : $responseType='Numeric' ? 'TEXT' : $responseType='Date' ? 'DATE' : ''\n        };\n\n    $getScreeningQns := function() {\n        (\n            $data := cornerstone_get_application_wf[0].data;\n            $questions := ($exists($data.actionItems) and $data.actionItems!=null and $count($data.actionItems) > 0) ? $data.actionItems : [];\n            $filterByTypeQns := [$filter($questions, function($v, $i, $a) { $v.type='Compliance' or $v.type='Disclaimer' or $v.type='Prescreening'\n                })\n            ];\n            [$filter($count($filterByTypeQns) > 0 ? $filterByTypeQns : [], function($v, $i, $a) { $v.responseType='Boolean' or $v.responseType='MultipleChoiceMultipleAnswer' or $v.responseType='MultipleChoiceSingleAnswer' or $v.responseType='Text' or $v.responseType='Numeric'  or $v.responseType='Date'\n                })\n            ]\n        )\n        };\n\n    $isItMultiValQuestion := function($input) {\n        $input = \"MultipleChoiceMultipleAnswer\" ? true : false\n        };\n\n    $inputOptionListObj := function($question) {\n            [$map(($question.responseOptions=null or $count($question.responseOptions)=0) ? [] : $question.responseOptions, function($value) {\n                    {\n                        \"label\": $value.responseText,\n                        \"value\": $value.responseId\n                    }\n                })\n            ]\n        };\n\n    $inputValidationObj := function($question) {\n        $question.responseType = \"MultipleChoiceMultipleAnswer\" ? {\n                \"maxSelections\": $count($question.responseOptions)\n            } : null\n        };\n\n    $dependencyCriteriaObj := function($question, $condition) {\n        (\n            $criterias := [\n                {\n                    \"field\": \"additionalFields.\" & $condition.parentQuestionId & \"_Question\",\n                    \"values\": $condition.responseId\n                }\n            ];\n            \n            {\n                \"criteria\": $criterias,\n                \"operator\": \"ALL\",\n                \"defaultBehavior\": \"SHOW\"\n            }\n        )\n        };\n\n    $questionObj := function($question, $condition) {\n        (\n            $questionWithCondition := {\n                \"type\": \"QUESTION\",\n                \"id\": $question.id,\n                \"label\": $question.questionText,\n                \"field\": \"additionalFields.\" & $question.id & \"_Question_\" & $question.type,\n                \"inputType\": $inputType($question.responseType),\n                \"isMultiValue\": $isItMultiValQuestion($question.responseType),\n                \"properties\": {\n                    \"isMandatory\": $question.required\n                },\n                \"inputOptionList\": $inputOptionListObj($question),\n                \"inputValidation\": $inputValidationObj($question),\n                \"dependencyCriteria\": $condition=null?null:$dependencyCriteriaObj($question, $condition)\n            };\n\n            $responses := ($exists($question.responseOptions) and $count($question.responseOptions) > 0)?$question.responseOptions: [];\n\n            $branchQns := [$map($responses, function($response) {\n                (\n                    $conditionObj := {\n                        \"parentQuestionId\": $question.id,\n                        \"responseId\": $response.responseId\n                    };\n\n                    $branchQuestions := ($exists($response.branchedQuestions) and $count($response.branchedQuestions) > 0) ? $response.branchedQuestions : [];\n                    [$map($branchQuestions, function($branchQuestion) {$questionObj($branchQuestion, $conditionObj)})] ~> $reduce($append)\n                )\n                })\n            ] ~> $reduce($append);\n\n            $append([$questionWithCondition], $branchQns)\n        )\n        };\n\n    $questions := $getScreeningQns();\n    [$map($questions, function($question) {$questionObj($question, null)})] ~> $reduce($append)\n\n    )]}},\n\"errors\": null\n}"
+            }
+          ],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-application-stage-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null and $exists(inputData.jobId) and inputData.jobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-application-stage-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-application-stage-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobApplicantUpdateStatus",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \"data\": { \"record\": [ { \"JobApplicantId\": \"${applicationId}\", \"JobRequisitionId\": \"${jobId}\", \"Status\": \"${newStatus}\", \"MarkComplete\": \"true\" } ] } }",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 202,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing or API failed.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB_QUESTION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-application-wf-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/x/rec-job-requisition/v1/requisition/${reqId}/application-workflow",
+          "headers": {},
+          "queryParams": {
+            "conditionalsIncluded": "true"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(inputData.atsJobId)"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            }
+          ],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-application-wf",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-get-application-wf-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqId",
+                "jsonataExpression": "inputData.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/x/rec-job-requisition/v1/requisition/${reqId}/application-workflow",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-applications-demo",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobRequisitionDetails?Page=1&PageSize=1",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US",
+            "ToDate": "${endDateTime}",
+            "FromDate": "${startDateTime}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"message\": \"Mock API call to support dependency fields for next integration.\"}"
+            }
+          ],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-applications",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append(\r\n  [],\r\n  $map(\r\n    $filter($, function($app) {\r\n      $exists($app.Id) and $app.Id != null and $app.CsodGUID != null and $app.RequisitionId != null\r\n    }),\r\n    function($app) {\r\n      {\r\n        \"atsApplicationId\": $string($app.Id),\r\n        \"atsCandidateId\": $app.CsodGUID,\r\n        \"atsJobId\": $app.RequisitionId,\r\n        \"status\": $app.Status != null and $app.Status != \"\" ? $app.Status : \"New Submission\",\r\n\r\n        \"appliedAt\":\r\n          $app.ApplicationReceivedDateLocal != null and\r\n          $app.ApplicationReceivedDateLocal != \"\" and\r\n          $app.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($app.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($app.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"createdDate\":\r\n          $app.ApplicationReceivedDateLocal != null and\r\n          $app.ApplicationReceivedDateLocal != \"\" and\r\n          $app.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($app.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($app.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"lastUpdatedDate\":\r\n          $app.ApplicationReceivedDateLocal != null and\r\n          $app.ApplicationReceivedDateLocal != \"\" and\r\n          $app.ApplicationReceivedDateLocal != \"Incomplete\" and\r\n          $count($split($app.ApplicationReceivedDateLocal, \"/\")) = 3 and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[0] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[1] != \"\" and\r\n          $split($app.ApplicationReceivedDateLocal, \"/\")[2] != \"\" and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) <= 12 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) > 0 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) <= 31 and\r\n          $number($split($app.ApplicationReceivedDateLocal, \"/\")[2]) > 1900\r\n        ?\r\n          $fromMillis(\r\n            $toMillis(\r\n              $split($app.ApplicationReceivedDateLocal, \"/\")[2] & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[0]))) & \"-\" &\r\n              ($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]) < 10\r\n                ? \"0\" & $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))\r\n                : $string($number($split($app.ApplicationReceivedDateLocal, \"/\")[1]))) &\r\n              \"T00:00:00.000Z\"\r\n            )\r\n          )\r\n        :\r\n          null,\r\n\r\n        \"insertedAt\": $now(),\r\n        \"updatedAt\": $now(),\r\n\r\n        \"customFields\": {\r\n          \"requisitionId\": $app.JobRequisitionId,\r\n          \"candidateType\": $app.CandidateType,\r\n          \"source\": $app.Source,\r\n          \"positionTitle\": $app.PositionTitle,\r\n          \"considerForOtherJobs\": $app.ConsiderForOtherJobs,\r\n          \"divisionId\": $app.DivisionId,\r\n          \"divisionTitle\": $app.DivisionTitle,\r\n          \"gradeId\": $app.GradeId,\r\n          \"gradeTitle\": $app.GradeTitle,\r\n          \"previousStatus\": $app.PreviousStatus,\r\n          \"requisitionOwners\": $app.RequisitionOwners\r\n        }\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-get-applications-demo",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "CurrentStatus",
+                "jsonataExpression": "[\"New Submission\", \"In Review\", \"Phone Screening\", \"Interview\", \"Background Check\", \"Offer Letter\", \"Closed\", \"Hired\"]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobApplicant?CurrentStatus=${CurrentStatus}",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {
+            "Language": "en-US"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "PageSize",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "Page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "cornerstone-job-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "cornerstone-get-all-job-reqs",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append(\r\n  [],\r\n  $map(\r\n    $filter($, function($job) {\r\n      $exists($job.Id) and $job.Id != null and $job.Ref != null\r\n    }),\r\n    function($job) {\r\n      {\r\n        \"atsJobId\": $job.Ref,\r\n        \"refNumber\": $job.Ref,\r\n        \"title\": $job.Title,\r\n        \"description\": \"<h2>Description</h2>\" & $job.ExternalDescription & (\r\n            $count($job.JobResponsibilities) > 0 ?\r\n                \"<h2>Responsibilities</h2><ul>\" &\r\n                $join(\r\n                $map($job.JobResponsibilities, function($responsibility) {\r\n                    \"<li>\" & $responsibility.Responsibility & \"</li>\"\r\n                }),\r\n                \"\"\r\n                ) & \"</ul>\"\r\n            : \"\"\r\n        ),\r\n        \"url\": $job.DefaultURL,\r\n        \"locations\": [\r\n            {\r\n                \"isPrimary\": true,\r\n                \"city\": $job.AddressDetails.City,\r\n                \"state\": $job.AddressDetails.State,\r\n                \"country\": $job.AddressDetails.Country,\r\n                \"postalCode\": $job.AddressDetails.PostalCode,\r\n                \"customFields\": {}\r\n            }\r\n        ],\r\n        \"department\": $job.Division,\r\n        \"status\": $job.Status='Open' ? \"OPEN\" : \"CLOSED\",\r\n        \"positionCategory\": $job.Division,\r\n        \"remoteType\": $job.EmploymentType,\r\n        \"company\": $job.Division,\r\n        \"recruiters\": [],\r\n        \"hiringManagers\": $job.HiringManager != null ? [$job.HiringManager.Name] : [],\r\n        \"createdDate\":\r\n            $job.CreateDateLocal != null and $job.CreateDateLocal != \"\" and $count($split($job.CreateDateLocal, \"/\")) = 3 and $split($job.CreateDateLocal, \"/\")[0] != \"\" and $split($job.CreateDateLocal, \"/\")[1] != \"\" and $split($job.CreateDateLocal, \"/\")[2] != \"\" and $number($split($job.CreateDateLocal, \"/\")[0]) > 0 and $number($split($job.CreateDateLocal, \"/\")[0]) <= 12 and $number($split($job.CreateDateLocal, \"/\")[1]) > 0 and $number($split($job.CreateDateLocal, \"/\")[1]) <= 31 and $number($split($job.CreateDateLocal, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.CreateDateLocal, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.CreateDateLocal, \"/\")[0]) < 10 ? \"0\" & $split($job.CreateDateLocal, \"/\")[0] : $split($job.CreateDateLocal, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.CreateDateLocal, \"/\")[1]) < 10 ? \"0\" & $split($job.CreateDateLocal, \"/\")[1] : $split($job.CreateDateLocal, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"lastUpdatedDate\":\r\n            $job.LastModificationDate != null and $job.LastModificationDate != \"\" and $count($split($job.LastModificationDate, \"/\")) = 3 and $split($job.LastModificationDate, \"/\")[0] != \"\" and $split($job.LastModificationDate, \"/\")[1] != \"\" and $split($job.LastModificationDate, \"/\")[2] != \"\" and $number($split($job.LastModificationDate, \"/\")[0]) > 0 and $number($split($job.LastModificationDate, \"/\")[0]) <= 12 and $number($split($job.LastModificationDate, \"/\")[1]) > 0 and $number($split($job.LastModificationDate, \"/\")[1]) <= 31 and $number($split($job.LastModificationDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.LastModificationDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.LastModificationDate, \"/\")[0]) < 10 ? \"0\" & $split($job.LastModificationDate, \"/\")[0] : $split($job.LastModificationDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.LastModificationDate, \"/\")[1]) < 10 ? \"0\" & $split($job.LastModificationDate, \"/\")[1] : $split($job.LastModificationDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"startDate\":\r\n            $job.DefaultEffectiveDate != null and $job.DefaultEffectiveDate != \"\" and $count($split($job.DefaultEffectiveDate, \"/\")) = 3 and $split($job.DefaultEffectiveDate, \"/\")[0] != \"\" and $split($job.DefaultEffectiveDate, \"/\")[1] != \"\" and $split($job.DefaultEffectiveDate, \"/\")[2] != \"\" and $number($split($job.DefaultEffectiveDate, \"/\")[0]) > 0 and $number($split($job.DefaultEffectiveDate, \"/\")[0]) <= 12 and $number($split($job.DefaultEffectiveDate, \"/\")[1]) > 0 and $number($split($job.DefaultEffectiveDate, \"/\")[1]) <= 31 and $number($split($job.DefaultEffectiveDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.DefaultEffectiveDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.DefaultEffectiveDate, \"/\")[0]) < 10 ? \"0\" & $split($job.DefaultEffectiveDate, \"/\")[0] : $split($job.DefaultEffectiveDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.DefaultEffectiveDate, \"/\")[1]) < 10 ? \"0\" & $split($job.DefaultEffectiveDate, \"/\")[1] : $split($job.DefaultEffectiveDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"endDate\":\r\n            $job.DefaultExpirationDate != null and $job.DefaultExpirationDate != \"\" and $count($split($job.DefaultExpirationDate, \"/\")) = 3 and $split($job.DefaultExpirationDate, \"/\")[0] != \"\" and $split($job.DefaultExpirationDate, \"/\")[1] != \"\" and $split($job.DefaultExpirationDate, \"/\")[2] != \"\" and $number($split($job.DefaultExpirationDate, \"/\")[0]) > 0 and $number($split($job.DefaultExpirationDate, \"/\")[0]) <= 12 and $number($split($job.DefaultExpirationDate, \"/\")[1]) > 0 and $number($split($job.DefaultExpirationDate, \"/\")[1]) <= 31 and $number($split($job.DefaultExpirationDate, \"/\")[2]) > 1900 ?\r\n                $fromMillis(\r\n                $toMillis(\r\n                    $split($job.DefaultExpirationDate, \"/\")[2] & \"-\" &\r\n                    ($number($split($job.DefaultExpirationDate, \"/\")[0]) < 10 ? \"0\" & $split($job.DefaultExpirationDate, \"/\")[0] : $split($job.DefaultExpirationDate, \"/\")[0]) & \"-\" &\r\n                    ($number($split($job.DefaultExpirationDate, \"/\")[1]) < 10 ? \"0\" & $split($job.DefaultExpirationDate, \"/\")[1] : $split($job.DefaultExpirationDate, \"/\")[1]) & \"T00:00:00.000Z\"\r\n                )\r\n                )\r\n            : null,\r\n        \"isDeleted\": $job.Status='Cancelled' or $job.Status='Closed',\r\n        \"insertedAt\": $now(),\r\n        \"updatedAt\": $now(),\r\n        \"customFields\": {}\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "cornerstone-job-change-event",
+            "dependencyFields": [],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "/services/api/Recruiting/JobRequisitionDetails",
+          "headers": {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "cornerstone-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2",
+            "API_KEY"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $cornerstoneResult := cornerstone_create_application[0].data; $exists($cornerstoneResult) and $cornerstoneResult != null ? { \"data\": { \"candidateId\": cornerstone_create_application[0].data.candidateId, \"applicationId\": cornerstone_create_application[0].data.applicationId }, \"errors\": [] } : { \"data\": null, \"errors\": [{ \"errorCode\": null, \"errorType\": null, \"message\": $string($), \"params\": {} }] } )"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ]

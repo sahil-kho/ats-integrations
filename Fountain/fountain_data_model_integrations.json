@@ -1,0 +1,593 @@
+[
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Fountain-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.phoneNumbers[0].phoneNumber) and inputData.candidate.phoneNumbers[0].phoneNumber != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/applicants",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Fountain-application-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Fountain-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "source",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"source\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultApplicantSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/applicants",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"name\": \"${firstName} ${lastName}\",\n  \"email\": \"${email}\",\n  \"phone_number\": \"${phoneNumber}\",\n  \"check_if_applicant_is_duplicate\": true,\n  \"funnel_id\": \"${jobId}\",\n  \"data\": {\n    \"utm_source\": \"${source}\"\n  }\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\":$.id, \"isDuplicate\" : false}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(duplicate_applicant_external_id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Candidate already applied to this job\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.phoneNumbers[0].phoneNumber) and inputData.candidate.phoneNumbers[0].phoneNumber != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Fountain-get-Credentials-upload",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Fountain-application-submission",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "response.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "response.applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/applicants/${applicationId}/secure_documents/upload",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n    \"filename\":inputData.application.attachment.attachmentFileName, \"applicationId\": \"${applicationId}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(url)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"applicationId\": \"${applicationId}\",\n  \"url\": $.url,\n  \"host\": $.host,\n  \"form_data\": $.form_data\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Credentials Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.applicationId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "S3-file-upload",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Fountain-get-Credentials-upload",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "url",
+                "jsonataExpression": "response.url",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "key",
+                "jsonataExpression": "response.form_data.key",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "key",
+                "jsonataExpression": "response.form_data.key",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "successActionStatus",
+                "jsonataExpression": "response.form_data.success_action_status",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "acl",
+                "jsonataExpression": "response.form_data.acl",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzEncAlgo",
+                "jsonataExpression": "response.form_data.`x-amz-server-side-encryption-customer-algorithm`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzEncKey",
+                "jsonataExpression": "response.form_data.`x-amz-server-side-encryption-customer-key`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzEncKeyMd5",
+                "jsonataExpression": "response.form_data.`x-amz-server-side-encryption-customer-key-MD5`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "policy",
+                "jsonataExpression": "response.form_data.policy",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzCredential",
+                "jsonataExpression": "response.form_data.`x-amz-credential`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzAlgorithm",
+                "jsonataExpression": "response.form_data.`x-amz-algorithm`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzDate",
+                "jsonataExpression": "response.form_data.`x-amz-date`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "xAmzSignature",
+                "jsonataExpression": "response.form_data.`x-amz-signature`",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "response.applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "file",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "${url}",
+          "headers": {
+            "Content-Length": "0"
+          },
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n  \"key\": \"${key}\",\n  \"success_action_status\": \"${successActionStatus}\",\n  \"acl\": \"${acl}\",\n  \"Content-Type\": \"application/octet-stream\",\n  \"x-amz-server-side-encryption-customer-algorithm\": \"${xAmzEncAlgo}\",\n  \"x-amz-server-side-encryption-customer-key\": \"${xAmzEncKey}\",\n  \"x-amz-server-side-encryption-customer-key-MD5\": \"${xAmzEncKeyMd5}\",\n  \"policy\": \"${policy}\",\n  \"x-amz-credential\": \"${xAmzCredential}\",\n  \"x-amz-algorithm\": \"${xAmzAlgorithm}\",\n  \"x-amz-date\": \"${xAmzDate}\",\n  \"x-amz-signature\": \"${xAmzSignature}\",\n  \"file\": \"${file}\"\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "file"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n    \"s3Key\":\"${key}\",\"applicationId\": \"${applicationId}\"\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Uploading to S3 integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.applicationId) and response.applicationId != null and $exists(response.url) and response.url != null and $exists(response.form_data) and response.form_data != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Fountain-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($applicationIdPost := Fountain_application_submission.applicationId[0];$exists($applicationIdPost) ? {\"data\": {\"candidateId\": $string($applicationIdPost),\"applicationId\": $string($applicationIdPost),\"customFields\": {}},\"errors\": null} : {\"data\": null,\"errors\": [{\"errorCode\": null,\"errorType\": null,\"message\": $string($),\"params\": {}}]})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "fountain-application-stage",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.created_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.updated_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.last_transitioned_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.funnel.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.stage.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicant.stage.title)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\": applicant.funnel.id, \n    \"atsCandidateId\": applicant.id, \n    \"atsApplicationId\":applicant.id,\n    \"stageId\":applicant.stage.id,\n    \"stageName\":applicant.stage.title, \n    \"appliedAt\":$fromMillis($toMillis(applicant.created_at)),\n    \"createdDate\":$fromMillis($toMillis(applicant.last_transitioned_at)),\n    \"lastUpdatedDate\":$fromMillis($toMillis(applicant.updated_at)),\n    \"insertedAt\":$now(),\n    \"updatedAt\":$now(),\n    \"customFields\":{\"source\":applicant.data.utm_source}\n    }",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "fountain-get-job-openings",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.openings",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$map($, function($job) { { \"atsJobId\": $job.id, \"refNumber\": $job.id, \"title\": $job.title, \"description\": $job.description, \"url\": $job.url, \"status\": ($job.job_advertise = true and $job.unlisted_from_sourcing = false) ? \"OPEN\" : \"CLOSED\", \"remoteType\": $job.job_type, \"createdDate\": $substring($job.date_posted,0,19), \"lastUpdatedDate\": $substring($job.created_at,0,19), \"startDate\": $substring($job.created_at,0,19), \"endDate\": null, \"updatedAt\": $now(), \"insertedAt\": $now(), \"isDeleted\": $job.unlisted_from_sourcing, \"company\": $job.brand_name ? $job.brand_name : $job.location_name, \"locations\": [{ \"city\": $job.location_city, \"state\": $job.location_state_code, \"country\": $job.location_country_code, \"postalCode\": $job.location_zipcode, \"isPrimary\": true }], \"customFields\": { \"jobType\": $job.job_type, \"industry\": $job.job_industry, \"pay\": $job.pay, \"ownerEmail\": $job.owner_email, \"ownerName\": $job.owner_name, \"job\": $job, \"hashtags\": $job.additional_info }, \"audit\": { \"source\": \"FOUNTAIN\", \"syncedAt\": $now() } } })",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/openings",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 1000,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

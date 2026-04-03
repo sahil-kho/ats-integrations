@@ -1,0 +1,1197 @@
+[
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.phoneNumber) and inputData.candidate.phoneNumber != null and $exists(inputData.candidate.address.city) and inputData.candidate.address.city != null and $exists(inputData.candidate.customFields.field38755) and inputData.candidate.customFields.field38755 != null and $exists(inputData.candidate.customFields.field38808) and inputData.candidate.customFields.field38808 != null and $exists(inputData.candidate.customFields.address) and inputData.candidate.customFields.address != null and $exists(inputData.candidate.customFields.city) and inputData.candidate.customFields.city != null and $exists(inputData.candidate.customFields.state) and inputData.candidate.customFields.state != null and $exists(inputData.candidate.customFields.post_code) and inputData.candidate.customFields.post_code != null and $exists(inputData.candidate.customFields.work_title) and inputData.candidate.customFields.work_title != null and $exists(inputData.candidate.customFields.employer) and inputData.candidate.customFields.employer != null and $exists(inputData.candidate.customFields.work_start_date) and inputData.candidate.customFields.work_start_date != null and $exists(inputData.application.customFields.applicationFormId) and inputData.application.customFields.applicationFormId != null and inputData.application.customFields.applicationFormId = \"ec919e67-bc97-47f5-a2b8-3941dace758d\" ? ($exists(inputData.candidate.customFields.field38747) and $exists(inputData.candidate.customFields.field38751) and $exists(inputData.candidate.customFields.field38753) and $exists(inputData.candidate.customFields.field38754)) : true and inputData.application.customFields.applicationFormId = \"ff6ad5bf-f159-4ced-9b7b-dd51d78a9864\" ? ($exists(inputData.candidate.customFields.field38752) and $exists(inputData.candidate.customFields.field38748) and $exists(inputData.candidate.customFields.field38749)) : true and inputData.application.customFields.applicationFormId = \"85739f9b-c3a8-4b1f-abc9-f1132918d4d6\" ? ($exists(inputData.candidate.customFields.field38809) and $exists(inputData.candidate.customFields.field38810) and $exists(inputData.candidate.customFields.field38811)) : true and inputData.application.customFields.applicationFormId = \"1d914ce5-2463-461e-a49e-cb3a81e5351e\" ? ($exists(inputData.candidate.customFields.field38809) and $exists(inputData.candidate.customFields.field38807)) : true and inputData.application.customFields.applicationFormId = \"7a8da37a-d241-4bf2-ad9f-a067b3a306c4\" ? ($exists(inputData.candidate.customFields.field38750) and $exists(inputData.candidate.customFields.field38756) and $exists(inputData.candidate.customFields.field38757)) : true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-candidate-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workTitle",
+                "jsonataExpression": "inputData.candidate.customFields.work_title",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "employer",
+                "jsonataExpression": "inputData.candidate.customFields.employer",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workStartDate",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.work_start_date) ? $fromMillis($toMillis(inputData.candidate.customFields.work_start_date), \"[Y0001]-[M01]-[D01]\") : null",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workEndDate",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.work_end_date) and inputData.candidate.customFields.work_end_date != \"\" and inputData.candidate.customFields.work_end_date!= \"null\")?$fromMillis($toMillis(inputData.candidate.customFields.work_end_date),\"[Y0001]-[M01]-[D01]\") : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workCountry",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.work_country) and inputData.candidate.customFields.work_country!=\"\"?inputData.candidate.customFields.work_country : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "addressCountry",
+                "jsonataExpression": "$exists(inputData.candidate.address.country) and inputData.candidate.address.country!=\"\"?inputData.candidate.address.country:\"United States\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "inputData.candidate.customFields.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "addressStreet",
+                "jsonataExpression": "inputData.candidate.customFields.address",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38755",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38755) and inputData.candidate.customFields.field38755!=null) ? inputData.candidate.customFields.field38755: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38808",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38808) and inputData.candidate.customFields.field38808!=null) ? inputData.candidate.customFields.field38808: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38750",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38750) and inputData.candidate.customFields.field38750!=null) ? inputData.candidate.customFields.field38750: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38756",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38756) and inputData.candidate.customFields.field38756!=null) ? inputData.candidate.customFields.field38756: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38757",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38757) and inputData.candidate.customFields.field38757!=null) ? inputData.candidate.customFields.field38757: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38751",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38751) and inputData.candidate.customFields.field38751!=null) ? inputData.candidate.customFields.field38751: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38753",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38753) and inputData.candidate.customFields.field38753!=null) ? inputData.candidate.customFields.field38753: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38754",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38754) and inputData.candidate.customFields.field38754!=null) ? inputData.candidate.customFields.field38754: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38752",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38752) and inputData.candidate.customFields.field38752!=null) ? inputData.candidate.customFields.field38752: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38748",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38748) and inputData.candidate.customFields.field38748!=null) ? inputData.candidate.customFields.field38748: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38749",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38749) and inputData.candidate.customFields.field38749!=null) ? inputData.candidate.customFields.field38749: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38809",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38809) and inputData.candidate.customFields.field38809!=null) ? inputData.candidate.customFields.field38809: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38810",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38810) and inputData.candidate.customFields.field38810!=null) ? inputData.candidate.customFields.field38810: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38811",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38811) and inputData.candidate.customFields.field38811!=null) ? inputData.candidate.customFields.field38811: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38807",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38807) and inputData.candidate.customFields.field38807!=null) ? inputData.candidate.customFields.field38807: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/people",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\"firstname\": $firstName,\"lastname\": $lastName,\"email\":$email,\"phones\": [{\"phonenumber\":$phoneNumber,\"phonetype\":\"Mobile\"}],\"workexperience\":[{\"worktitle\": $workTitle,\"workemployer\":$employer,\"workstartdate\":$workStartDate,\"workenddate\": $workEndDate,\"workcountry\":{\"value\":$workCountry}}],\"addresses\":[{\"addresscountry\":{\"value\":$addressCountry},\"addressstate\":{\"value\":$state},\"addresscity\":$city,\"addressstreet1\":$addressStreet,\"addresstype\":{\"value\":\"Home\"}}],\"folder\":{\"id\":\"D32007\",\"value\":\"Cand:Active\"}}, $string($field38755) != \"\" ? {\"field38755\": $field38755} : {}, $string($field38808) != \"\" ? {\"field38808\": $field38808} : {}, $string($field38750) != \"\" ? {\"field38750\": $field38750} : {}, $string($field38756) != \"\" ? {\"field38756\": $field38756} : {}, $string($field38751) != \"\" ? {\"field38751\": $field38751} : {}, $string($field38753) != \"\" ? {\"field38753\": $field38753} : {}, $string($field38754) != \"\" ? {\"field38754\": $field38754} : {}, $string($field38752) != \"\" ? {\"field38752\": $field38752} : {}, $string($field38748) != \"\" ? {\"field38748\": $field38748} : {}, $string($field38749) != \"\" ? {\"field38749\": $field38749} : {}, $string($field38809) != \"\" ? {\"field38809\": $field38809} : {}, $string($field38810) != \"\" ? {\"field38810\": $field38810} : {}, $string($field38811) != \"\" ? {\"field38811\": $field38811} : {}, $string($field38757) != \"\" ? {\"field38757\": $field38757} : {}, $string($field38807) != \"\" ? {\"field38807\": $field38807} : {}])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($locationHeaders :=headers.Location;{\"candidateId\": ($not($locationHeaders) or $count($locationHeaders) = 0 ? null : $split($locationHeaders[0], \"/\")[$count($split($locationHeaders[0], \"/\")) - 1]),\"isDuplicate\": false})"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":$exists(body.errors[0].duplicateProfiles[0].id) ?body.errors[0].duplicateProfiles[0].id : null, \"isDuplicate\":true}"
+            }
+          ],
+          "headersInResponse": true,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.phoneNumber) and inputData.candidate.phoneNumber != null and $exists(inputData.candidate.customFields) and inputData.candidate.customFields != null and $exists(inputData.candidate.address) and inputData.candidate.address != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-update",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.phoneNumber) and inputData.candidate.phoneNumber != null and $exists(inputData.candidate.customFields) and inputData.candidate.customFields != null and $exists(inputData.candidate.address) and inputData.candidate.address != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-candidate-create",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workTitle",
+                "jsonataExpression": "inputData.candidate.customFields.work_title",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "employer",
+                "jsonataExpression": "inputData.candidate.customFields.employer",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workStartDate",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.work_start_date) ? $fromMillis($toMillis(inputData.candidate.customFields.work_start_date), \"[Y0001]-[M01]-[D01]\") : null",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workEndDate",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.work_end_date) and inputData.candidate.customFields.work_end_date != \"\" and inputData.candidate.customFields.work_end_date!= \"null\")?$fromMillis($toMillis(inputData.candidate.customFields.work_end_date),\"[Y0001]-[M01]-[D01]\") : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workCountry",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.work_country) and inputData.candidate.customFields.work_country!=\"\"?inputData.candidate.customFields.work_country : \"-\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "addressCountry",
+                "jsonataExpression": "$exists(inputData.candidate.address.country) and inputData.candidate.address.country!=\"\"?inputData.candidate.address.country:\"United States\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "inputData.candidate.customFields.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "addressStreet",
+                "jsonataExpression": "inputData.candidate.customFields.address",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38755",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38755) and inputData.candidate.customFields.field38755!=null) ? inputData.candidate.customFields.field38755: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38808",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38808) and inputData.candidate.customFields.field38808!=null) ? inputData.candidate.customFields.field38808: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38750",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38750) and inputData.candidate.customFields.field38750!=null) ? inputData.candidate.customFields.field38750: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38756",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38756) and inputData.candidate.customFields.field38756!=null) ? inputData.candidate.customFields.field38756: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38757",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38757) and inputData.candidate.customFields.field38757!=null) ? inputData.candidate.customFields.field38757: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38751",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38751) and inputData.candidate.customFields.field38751!=null) ? inputData.candidate.customFields.field38751: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38753",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38753) and inputData.candidate.customFields.field38753!=null) ? inputData.candidate.customFields.field38753: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38754",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38754) and inputData.candidate.customFields.field38754!=null) ? inputData.candidate.customFields.field38754: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38752",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38752) and inputData.candidate.customFields.field38752!=null) ? inputData.candidate.customFields.field38752: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38748",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38748) and inputData.candidate.customFields.field38748!=null) ? inputData.candidate.customFields.field38748: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38749",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38749) and inputData.candidate.customFields.field38749!=null) ? inputData.candidate.customFields.field38749: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38809",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38809) and inputData.candidate.customFields.field38809!=null) ? inputData.candidate.customFields.field38809: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38810",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38810) and inputData.candidate.customFields.field38810!=null) ? inputData.candidate.customFields.field38810: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38811",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38811) and inputData.candidate.customFields.field38811!=null) ? inputData.candidate.customFields.field38811: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "field38807",
+                "jsonataExpression": "($exists(inputData.candidate.customFields.field38807) and inputData.candidate.customFields.field38807!=null) ? inputData.candidate.customFields.field38807: \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PATCH",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/people/${candidateId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\"firstname\": $firstName,\"lastname\": $lastName,\"email\":$email,\"phones\": [{\"phonenumber\":$phoneNumber,\"phonetype\":\"Mobile\"}],\"workexperience\":[{\"worktitle\": $workTitle,\"workemployer\":$employer,\"workstartdate\":$workStartDate,\"workenddate\": $workEndDate,\"workcountry\":{\"value\":$workCountry}}],\"addresses\":[{\"addresscountry\":{\"value\":$addressCountry},\"addressstate\":{\"value\":$state},\"addresscity\":$city,\"addressstreet1\":$addressStreet,\"addresstype\":{\"value\":\"Home\"}}],\"folder\":{\"id\":\"D32007\",\"value\":\"Cand:Active\"}}, $string($field38755) != \"\" ? {\"field38755\": $field38755} : {}, $string($field38808) != \"\" ? {\"field38808\": $field38808} : {}, $string($field38750) != \"\" ? {\"field38750\": $field38750} : {}, $string($field38756) != \"\" ? {\"field38756\": $field38756} : {}, $string($field38751) != \"\" ? {\"field38751\": $field38751} : {}, $string($field38753) != \"\" ? {\"field38753\": $field38753} : {}, $string($field38754) != \"\" ? {\"field38754\": $field38754} : {}, $string($field38752) != \"\" ? {\"field38752\": $field38752} : {}, $string($field38748) != \"\" ? {\"field38748\": $field38748} : {}, $string($field38749) != \"\" ? {\"field38749\": $field38749} : {}, $string($field38809) != \"\" ? {\"field38809\": $field38809} : {}, $string($field38810) != \"\" ? {\"field38810\": $field38810} : {}, $string($field38811) != \"\" ? {\"field38811\": $field38811} : {}, $string($field38757) != \"\" ? {\"field38757\": $field38757} : {}, $string($field38807) != \"\" ? {\"field38807\": $field38807} : {}])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":${candidateId},\"isDuplicate\":true}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId!= null and response.isDuplicate=true"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-resume-upload",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.attachment) and inputData.application.attachment != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-candidate-update",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentFileName",
+                "jsonataExpression": "$encodeUrlComponent(inputData.application.attachment.attachmentFileName)",
+                "restApiIntegrationContext": "API_HEADER"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContentType",
+                "jsonataExpression": "inputData.application.attachment.attachmentContentType",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "PATCH",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/people/${candidateId}/fields/resume/binary",
+          "headers": {
+            "Content-Disposition": "form-data; name=\"resume\"; filename=\"${attachmentFileName}\"",
+            "Content-Length": "0"
+          },
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": {
+              "resume": "${attachmentContent}"
+            },
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "resume"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 204,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":${candidateId}}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null and $exists(response.candidateId) and response.candidateId!=null and $exists(response.isDuplicate) and response.isDuplicate=true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateId := ($exists(iCIMS_candidate_create[0].candidateId) ? iCIMS_candidate_create[0].candidateId : null);$isDuplicate := ($exists(iCIMS_candidate_create[0].isDuplicate)?iCIMS_candidate_create[0].isDuplicate : null);$updationId :=($exists(iCIMS_candidate_update[0].candidateId) ? iCIMS_candidate_update[0].candidateId : null);$resumeId :=($exists(iCIMS_candidate_resume_upload[0].candidateId) ? iCIMS_candidate_resume_upload[0].candidateId :null);$resumeId!=null?{\"data\":{\"candidateId\":$resumeId,\"customFields\":{}},\"errors\":[]}:$updationId!=null?{\"data\":{\"candidateId\":$updationId,\"customFields\": {}},\"errors\": [{\"errorCode\":500, \"errorType\": \"ERROR\", \"message\": $string(iCIMS_candidate_resume_upload[0]),\"params\":{}}]}:$candidateId!=null?{\"data\":{\"candidateId\":$candidateId,\"customFields\": {}},\"errors\": [{\"errorCode\":500, \"errorType\": \"ERROR\", \"message\": $string(iCIMS_candidate_update[0]),\"params\":{}}]}:{\"data\":{\"candidateId\":$candidateId,\"customFields\":{}},\"errors\":[{\"errorCode\":500, \"errorType\": \"ERROR\", \"message\": $string(iCIMS_candidate_create[0]), \"params\":{}}]})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateId := ($exists(iCIMS_candidate_application_submission[0].candidateId) ? iCIMS_candidate_application_submission[0].candidateId : null);$applicationIdPost := ($exists(iCIMS_candidate_application_submission[0].applicationId) ? iCIMS_candidate_application_submission[0].applicationId : null);$applicationIdPost!=null?{\"data\": {\"candidateId\": $candidateId, \"applicationId\": $applicationIdPost,\"customFields\": {}    },    \"errors\": null}:{\"data\": null,\"errors\": [{\"errorCode\": \"500\",\"errorType\": \"ERROR\",\"message\": $string($),\"params\": {}}]})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "iCIMS-candidate-application-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId!= null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "baseProfile",
+                "jsonataExpression": "($splitRef := $split(inputData.application.atsJobId, \"-\");$number($splitRef[$count($splitRef) - 1]))",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "associatedProfile",
+                "jsonataExpression": "$number(inputData.candidate.customFields.candidateId)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "$number(inputData.candidate.customFields.candidateId)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/applicantworkflows",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"baseprofile\": ${baseProfile},\"associatedprofile\":${associatedProfile} ,\"source\":\"joveo\",\"status\": {\"id\": \"D10100\",\"formattedvalue\": \"New Submissions – External Portal\",\"value\": \"New Submissions – External Portal\"}}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($locationHeaders :=headers.Location;{ \"applicationId\": ($not($locationHeaders) or $count($locationHeaders) = 0 ? null : $split($locationHeaders[0], \"/\")[$count($split($locationHeaders[0], \"/\")) - 1]),\"candidateId\":${candidateId}})"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errors\": body.errors}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": true,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId!= null and $exists(inputData.candidate.customFields.candidateId) and inputData.candidate.customFields.candidateId!= null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "iCIMS-portal-job-search",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "searchResults",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.self) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.id) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.portalUrl) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.updatedDate) }), function($acc, $v) { $acc and $v })"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($v) {{\"atsJobId\": $v.id, \"refNumber\": $v.id, \"url\": $v.portalUrl, \"insertedAt\":$now(), \"updatedAt\": $now()}})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_URL",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/search/portals/careers",
+          "headers": {},
+          "queryParams": {
+            "staleness": "0"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 100,
+            "jsonataExpressionMap": {
+              "maxUpdatedDate": "$sort([$map($count(searchResults) > 0 ? searchResults: [{\"updatedDate\": \"1990-01-01 12:00 AM\"}], function($v) { $v.updatedDate })])[-1]"
+            },
+            "paginationIndicatorJsonataExpression": "$count(searchResults)>=1000"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "filters": [
+                {
+                  "name": "job.updateddate",
+                  "value": [
+                    "${maxUpdatedDate}"
+                  ],
+                  "operator": ">"
+                }
+              ]
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "iCIMS-get-posted-job",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(header[label = \"Title\"]) = true) and ($exists(header[label = \"ID\"]) = true) and ($exists(description) = true) and ($count(description) > 0)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\"atsJobId\":$split(header[label=\"ID\"].value,'-')[-1],\"refNumber\":$split(header[label=\"ID\"].value,'-')[-1],\"title\":header[label=\"Title\"].value,\"description\":$join([$map(description,function($v){\"<h2>\"&$v.label&\"</h2>\"&$v.value})],\"\"),\"positionCategory\":header[label=\"Category\"].value=\"..\"?\"\":header[label=\"Category\"].value,\"remoteType\":header[label=\"Type\"].value=\"..\"?\"\":header[label=\"Type\"].value,\"status\":\"OPEN\", \"insertedAt\":$now(), \"updatedAt\": $now()}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-portal-job-search",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "url",
+                "jsonataExpression": "[$map(searchResults, function($v) { $v.self })]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "${url}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "iCIMS-get-job-profile",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "NotEmptyRule",
+              "jsonataExpression": "jobid"
+            },
+            {
+              "type": "NotEmptyRule",
+              "jsonataExpression": "jobtitle"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\"atsJobId\":$split(jobid,'-')[-1],\"refNumber\":$split(jobid,'-')[-1],\"title\":jobtitle,\"customFields\":{\"folder\":folder,\"hiringmanager\":hiringmanager,\"recruiter\":recruiter,\"links\":links,\"joblocation\":joblocation}, \"insertedAt\":$now(), \"updatedAt\": $now()}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-portal-job-search",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "[$map(searchResults, function($v) { $v.id })]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/jobs/${jobId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "iCIMS-get-job-location-profile",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\"atsJobId\":\"${atsJobId}\",\"locations\":[{\"isPrimary\":true,\"country\":addresscountry.value,\"countryIsoCode\":addresscountry.abbrev,\"state\":addressstate.value,\"city\":addresscity,\"postalCode\":addresszip,\"customFields\":{\"addressstate\":addressstate,\"addresscountry\":addresscountry,\"addressstreet1\":addressstreet1,\"addressstreet2\":addressstreet2}}], \"updatedAt\": $now()}",
+            "targetFields": [
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_UPDATED_AT"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-get-job-profile",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "url",
+                "jsonataExpression": "joblocation.address",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$split(jobid,'-')[-1]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "${url}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "iCIMS-get-portal-profile",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "{\n\"atsJobId\":\"${atsJobId}\",\n\"company\":field38896,\n\"updatedAt\":$now(),\n\"customFields\":$\n}",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "NotEmptyRule",
+              "jsonataExpression": "company"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n\"atsJobId\":atsJobId,\n\"company\":company,\n\"updatedAt\":$now(),\n\"customFields\":customFields}",
+            "targetFields": [
+              "ATS_JOB_ID",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "iCIMS-portal-job-search",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "[$map(searchResults, function($v) { $split($v.self,'/')[-1] })]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "portalId",
+                "jsonataExpression": "[$map(searchResults, function($v) { $split($v.self,'/')[-2] })]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "[$map(searchResults, function($v) { $split($v.self,'/')[-1] })]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.icims.com/customers/${atsCustomerId}/jobs/${jobId}",
+          "headers": {},
+          "queryParams": {
+            "fields": "field38896"
+          },
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

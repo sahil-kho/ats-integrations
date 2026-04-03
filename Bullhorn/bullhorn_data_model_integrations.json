@@ -1,0 +1,1262 @@
+[
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": null,
+            "targetFields": [],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/bajecp",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n  $isValidCandidateId := function($candidateId) { \n    $type($candidateId) = \"string\" and $length($candidateId) > 0 \n  };\n  \n  ($exists(bullhorn_create_application_one[0].errorMessage) or false = $isValidCandidateId(bullhorn_create_application_one[0].candidateId)) \n    ? (\n        ($exists(bullhorn_create_application_two[0].errorMessage) or false = $isValidCandidateId(bullhorn_create_application_two[0].candidateId)) \n          ? (\n              ($exists(bullhorn_check_application_already_exists[0].errorMessage) or false = $isValidCandidateId(bullhorn_check_application_already_exists[0].candidateId)) \n                ? { \n                    \"data\": null, \n                    \"errors\": [ \n                      { \n                        \"errorCode\": \"500\", \n                        \"errorType\": \"Internal error\", \n                        \"message\": \"Error while creating application on bullhorn.\", \n                        \"params\": { \n                          \"bullhorn_create_application_one_error\": $string(bullhorn_create_application_one[0].errorMessage), \n                          \"bullhorn_create_application_two_error\": $string(bullhorn_create_application_two[0].errorMessage), \n                          \"error\": $string($) \n                        } \n                      } \n                    ] \n                  } \n                : { \n                    \"data\": { \n                      \"candidateId\": bullhorn_check_application_already_exists[0].candidateId, \n                      \"applicationId\": bullhorn_check_application_already_exists[0].applicationId, \n                      \"customFields\": { \n                        \"jobId\": bullhorn_check_application_already_exists[0].jobId \n                      } \n                    } \n                  }\n            )\n          : { \n              \"data\": { \n                \"candidateId\": bullhorn_create_application_two[0].candidateId, \n                \"applicationId\": bullhorn_create_application_two[0].applicationId, \n                \"customFields\": { \n                  \"jobId\": bullhorn_create_application_two[0].jobId \n                } \n              } \n            }\n      ) \n    : { \n        \"data\": { \n          \"candidateId\": bullhorn_create_application_one[0].candidateId, \n          \"applicationId\": bullhorn_create_application_one[0].applicationId, \n          \"customFields\": { \n            \"jobId\": bullhorn_create_application_one[0].jobId \n          } \n        } \n      }\n)"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "bullhorn-job",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($job){\r\n    {\r\n        \"title\": $job.title,\r\n        \"atsJobId\": $job.id,\r\n        \"refNumber\": $job.id,\r\n        \"description\": $job.publicDescription,\r\n        \"url\":$job.jobPostingURL!=null and $job.jobPostingURL!=\"\"?$job.jobPostingURL:\"string\",\r\n        \"locations\":[{\r\n            \"country\":$job.address.countryName,\r\n            \"countryIsoCode\":$job.address.countryCode,\r\n            \"state\":$job.address.state,\r\n            \"city\":$job.address.city,\r\n            \"postalCode\":$job.address.zip,\r\n            \"customFields\":null\r\n        }],\r\n        \"status\":$job.isOpen=true?\"OPEN\":\"CLOSED\",\n        \"positionCategory\":$job.categories.data[0].name,\r\n        \"company\": $job.clientCorporation.name,\r\n        \"remoteType\":($exists($job.isWorkFromHome) and $job.isWorkFromHome = true) ? \"REMOTE\" : \"ONSITE\",\r\n        \"startDate\": ($exists($job.startDate) and $job.startDate != null) ? $fromMillis($job.startDate) : null,\r\n        \"endDate\": null,\r\n        \"createdDate\": $fromMillis($job.dateAdded),\r\n        \"lastUpdatedDate\":$fromMillis($job.dateLastModified),\r\n        \"updatedAt\":$now(),\r\n        \"isDeleted\":false,\r\n        \"insertedAt\":$now(),\r\n        \"customFields\":($exists($job.clientContact) or $exists($job.employmentType) or $exists($job.isJobcastPublished) or $exists($job.owner) or $exists($job.assignedUsers) or $exists($job.skills) or $exists($job.businessSectors) or $exists($job.isWorkFromHome) or $exists($job.isOpen) or $exists($job.status)) ? {\"status\":$exists($job.isOpen)?($job.isOpen=true?\"OPEN\":\"CLOSED\"):null,\"statusFromApi\":$exists($job.status)?$job.status:null,\"isWorkFromHome\":$exists($job.isWorkFromHome)?$job.isWorkFromHome:null,\"clientContact\":$exists($job.clientContact)?$job.clientContact:null,\"employmentType\":$exists($job.employmentType)?$job.employmentType:null,\"publishingStatus\":$exists($job.isJobcastPublished)?($job.isJobcastPublished=true?\"Published\":\"Not Published\"):null,\"owner\":$exists($job.owner)?$job.owner:null,\"assignedTo\":$exists($job.assignedUsers) and $count($job.assignedUsers.data) > 0 ? $job.assignedUsers.data[0].name : null,\"requiredSkills\":$exists($job.skills) and $count($job.skills.data) > 0 ? $map($job.skills.data, function($s) { $s.name }) : null,\"additionalSkills\":$exists($job.skills) and $count($job.skills.data) > 0 ? $map($job.skills.data, function($s) { $s.name }) : null,\"industry\":$exists($job.businessSectors) and $count($job.businessSectors.data) > 0 ? $map($job.businessSectors.data, function($bs) { $bs.name }) : null} : null\r\n    }\r\n})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/JobOrder",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "dateLastModified:[${startDateTime} TO ${endDateTime}]",
+            "count": "${count}",
+            "start": "${start}",
+            "fields": "id,title,isOpen,dateAdded,dateLastModified,publicDescription,jobPostingURL,address,categories,clientCorporation,clientContact,employmentType,startDate,isJobcastPublished,owner,assignedUsers,skills,businessSectors,status"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "count",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "count": "200",
+              "start": "$exists(start)?$number(start)+200:0"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(total) and ($number(start)+$number(count))<$number(total)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/entity/Candidate",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-check-candidate-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_QUERY_PARAM"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/Candidate",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "email:${email} AND isDeleted:0",
+            "fields": "id"
+          },
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(data) > 0 and $exists(data[0].id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": data[0].id, \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\" ,\"integrationId\":\"bullhorn-check-candidate-already-exists\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(data) = 0"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\" , \"integrationId\":\"bullhorn-check-candidate-already-exists\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage, \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\" , \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-bullhorn-check-candidate-already-exists.\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-create-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "canEmail",
+                "jsonataExpression": "$exists(inputData.candidate.canEmail) and inputData.candidate.canEmail != null ? inputData.candidate.canEmail : true",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "name",
+                "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null ? inputData.candidate.firstName : \"\") & \" \" & ($exists(inputData.candidate.lastName) and inputData.candidate.lastName != null ? inputData.candidate.lastName : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/entity/Candidate",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n    \"firstName\":\"${firstName}\",\n    \"lastName\":\"${lastName}\",\n    \"name\":\"${name}\",\n    \"email\":\"${email}\",\n    \"mobile\":\"${phoneNumber}\",\n    \"phone\":\"${phoneNumber}\",\n    \"canEmail\":${canEmail}\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(changedEntityId) and changedEntityId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":changedEntityId, \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"integrationId\":\"bullhorn-create-candidate\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage, \"BhRestToken\": \"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"integrationId\": \"bullhorn-create-candidate\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-bullhorn-create-candidate.\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.candidateId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-upload-resume-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.application.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/file/Candidate/${candidateId}",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \n    \"fileContent\":\"${attachmentContent}\",\n    \"externalID\": \"portfolio\",\n    \"fileType\": \"SAMPLE\",\n    \"name\": \"${fileName}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(fileId) and fileId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":\"${candidateId}\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-bullhorn-upload-resume-one.\", \"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and\n$exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-check-application-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_QUERY_PARAM"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_QUERY_PARAM"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/JobSubmission",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "candidate.id:${candidateId} AND jobOrder.id:${jobId}",
+            "fields": "id"
+          },
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(data[0].id) and data[0].id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\":$string(data[0].id),\n \"candidateId\":\"${candidateId}\", \n \"jobId\": \"${jobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(data) = 0"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"BhRestToken\":\"28645_8204920_aeff4e2f-4d0b-4c2f-b321-83a61abe7cb9\" , \"candidateId\":\"${candidateId}\", \"restUrl\":\"https://rest44.bullhornstaffing.com/rest-services/dkixnd/\"}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\", \"candidateId\":response.candidateId}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-bullhorn-check-application-already-exists.\", \"candidateId\": response.candidateId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-create-application-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-upload-resume-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/entity/JobSubmission",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{  \n    \"candidate\": { \"id\": \"${candidateId}\" },\n    \"jobOrder\": { \"id\": \"${atsJobId}\" },\n    \"status\": \"${initialApplicationStage}\",\n    \"source\": \"Joveo\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(changedEntityId) and changedEntityId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \n  \"applicationId\":changedEntityId,\n  \"candidateId\":data.candidate.id, \n  \"jobId\":data.jobOrder.id\n }"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-bullhorn-create-application-one.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and \n $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null "
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-create-application-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-check-application-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/entity/JobSubmission",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{  \n    \"candidate\": { \"id\": \"${candidateId}\" },\n    \"jobOrder\": { \"id\": \"${atsJobId}\" },\n    \"status\": \"${initialApplicationStage}\",\n    \"source\": \"Joveo\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(changedEntityId) and changedEntityId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \n  \"applicationId\":changedEntityId,\n  \"candidateId\":data.candidate.id, \n  \"jobId\":data.jobOrder.id\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing bullhorn-create-application-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and \n $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null "
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.applicationId))"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "bullhorn-applications-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($application){\n  $exists($application.id)\n  and $exists($application.candidate.id)\n  and $exists($application.jobOrder.id)\n  and $exists($application.status)\n  ? {\n      \"atsApplicationId\": $application.id,\n      \"atsJobId\": $application.jobOrder.id,\n      \"atsCandidateId\": $application.candidate.id,\n\n      \"status\": $application.status,\n      \"source\": $application.source != null and $application.source != \"\" ? $application.source : \"NOT_PROVIDED\",\n\n      \"createdDate\": $fromMillis($application.dateAdded),\n      \"lastUpdatedDate\": $exists($application.dateLastModified)\n        ? $fromMillis($application.dateLastModified)\n        : null,\n\n      \"insertedAt\": $now(),\n      \"updatedAt\": $now(),\n      \"isDeleted\": false,\n\n      \"customFields\": {\n        \"email\": $exists($application.candidate.email) ? $application.candidate.email : null,\n        \"candidateFirstName\": $exists($application.candidate.firstName) ? $application.candidate.firstName : null,\n        \"candidateLastName\": $exists($application.candidate.lastName) ? $application.candidate.lastName : null,\n        \"jobTitle\": $exists($application.jobOrder.title) ? $application.jobOrder.title : null\n      }\n    }\n  : null\n})]",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/JobSubmission",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "dateLastModified:[${startDate} TO ${endDate}]",
+            "count": "${count}",
+            "start": "${start}",
+            "fields": "id,candidate(id,email,firstName,lastName),jobOrder(id,title),status,source,dateAdded,dateLastModified"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "count",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "count": "200",
+              "start": "$exists(start)?$number(start)+200:0"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(total) and ($number(start)+$number(count))<$number(total)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDate",
+            "endDateTimeKey": "endDate",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-application-stage-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $bullhornResult := bullhorn_application_stage_submission[0]; ($exists($bullhornResult.changedEntityId) and $exists($bullhornResult.changeType) and $bullhornResult.changeType = \"UPDATE\") ? { \"data\": { \"candidateId\": null, \"applicationId\": $string($bullhornResult.changedEntityId) }, \"errors\": [] } : { \"data\": { \"candidateId\": null, \"applicationId\": null }, \"errors\": [ { \"errorCode\": null, \"errorType\": null, \"message\": $string($bullhornResult), \"params\": {} } ] } )"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-application-stage-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and (($exists(inputData.newStatus) and inputData.newStatus != null) or ($exists(inputData.applicationStage) and inputData.applicationStage != null))"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":\"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "bullhorn-application-stage-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "bullhorn-application-stage-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "$exists(inputData.newStatus) ? inputData.newStatus : inputData.applicationStage",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/entity/JobSubmission/${applicationId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \"status\": \"${newStatus}\" }",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(changedEntityId) and $exists(changeType) and changeType = \"UPDATE\""
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":\"Bullhorn application stage update failed or API did not return expected update response.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "bullhorn-candidate",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($c){{\"joveoCandidateId\":$c.id,\"joveoCustomerId\":$environment.joveoCustomerId,\"atsCandidateId\":$c.id,\"firstName\":$c.firstName,\"lastName\":$c.lastName,\"email\":$c.email,\"canEmail\":true,\"phoneNumbers\":$append([],$filter([{\"isPrimary\":true,\"phoneNumber\":$c.mobile},{\"isPrimary\":false,\"phoneNumber\":$c.phone},{\"isPrimary\":false,\"phoneNumber\":$c.phone2},{\"isPrimary\":false,\"phoneNumber\":$c.phone3},{\"isPrimary\":false,\"phoneNumber\":$c.workPhone}],function($p){$exists($p.phoneNumber) and $p.phoneNumber!=null})),\"address\":$exists($c.address)?{\"city\":$c.address.city,\"state\":$c.address.state,\"country\":$trim($c.address.countryName),\"postalCode\":$c.address.zip}:null,\"customFields\":$c,\"createdDate\":$fromMillis($c.dateAdded),\"lastUpdatedDate\":$fromMillis($c.dateLastModified),\"insertedAt\":$now(),\"updatedAt\":$now(),\"isDeleted\":$exists($c.isDeleted)?$c.isDeleted:false}})]",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/Candidate",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "dateLastModified:[${startDateTime} TO ${endDateTime}]",
+            "count": "${count}",
+            "start": "${start}",
+            "fields": "id,firstName,middleName,lastName,name,email,email2,email3,phone,phone2,phone3,mobile,workPhone,fax,status,source,candidateSource,owner,address,secondaryAddress,occupation,experience,salary,salaryLow,hourlyRate,hourlyRateLow,employmentPreference,preferredContact,travelLimit,gender,ethnicity,veteran,willRelocate,workAuthorized,externalID,estaffGUID,migrateGUID,dateAdded,dateLastModified,isDeleted"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "count",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "count": "200",
+              "start": "$exists(start)?$number(start)+200:0"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(total) and ($number(start)+$number(count))<$number(total)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "bullhorn-application-stage-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[ $map($$, function($stage) { $exists($stage.id) and $exists($stage.candidate.email) ? { \"atsApplicationId\": $string($stage.id), \"atsJobId\": $string($stage.jobOrder.id), \"atsCandidateId\": $string($stage.candidate.id), \"stageId\": $stage.status, \"stageName\": $stage.status, \"createdDate\": $exists($stage.dateAdded) ? $fromMillis($number($stage.dateAdded)) : null, \"lastUpdatedDate\": $exists($stage.dateLastModified) ? $fromMillis($number($stage.dateLastModified)) : null, \"appliedAt\": $exists($stage.dateAdded) ? $fromMillis($number($stage.dateAdded)) : ($exists($stage.dateLastModified) ? $fromMillis($number($stage.dateLastModified)) : null), \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": { \"email\": $stage.candidate.email, \"candidateFirstName\": $stage.candidate.firstName, \"candidateLastName\": $stage.candidate.lastName, \"jobTitle\": $stage.jobOrder.title }, \"audit\": { \"source\": \"bullhorn\", \"entity\": \"APPLICATION_STAGE\", \"syncedAt\": $now(), \"rawStatus\": $stage.status } } : null })[$exists($)] ]",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT",
+              "ATS_APPLICATION_APPLIED_DATE"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BULLHORN_OAUTH2"
+          ],
+          "apiPath": "/search/JobSubmission",
+          "headers": {
+            "BhRestToken": "${BhRestToken}"
+          },
+          "queryParams": {
+            "query": "dateLastModified:[${startDate} TO ${endDate}]",
+            "count": "${count}",
+            "start": "${start}",
+            "fields": "id,status,candidate(id,firstName,lastName,email,phone,mobile,status),jobOrder(id,title),dateAdded,dateLastModified"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "count",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "count": "200",
+              "start": "$exists(start) ? $number(start) + 200 : 0"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(total) and ($number(start) + $number(count)) < $number(total)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDate",
+            "endDateTimeKey": "endDate",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

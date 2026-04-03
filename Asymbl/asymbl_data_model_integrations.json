@@ -1,0 +1,813 @@
+[
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "{}"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-check-contact-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$count(records) > 0 ? records[0] : null",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "assymbl-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "checkContactUrl",
+                "jsonataExpression": "($email := inputData.candidate.email; $encodedEmail := $replace($replace($email, \"'\", \"\\'\"), \"+\", \"%2B\"); \"services/data/v63.0/query/?q=SELECT+Id,Email+FROM+Contact+WHERE+Email='\" & $encodedEmail & \"'+LIMIT+1\")",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/${checkContactUrl}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(records)"
+                }
+              ],
+              "jsonataConvertorExpression": "$count(records) > 0 ? {\"contactId\": records[0].Id, \"exists\": true} : {\"contactId\": null, \"exists\": false}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"contactId\": null, \"exists\": false, \"errorMessage\": \"Failed to check if contact exists.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-contact-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "{\"candidateId\": candidateId, \"contactId\": contactId}"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "assymbl-check-contact-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contactId",
+                "jsonataExpression": "($exists(response.contactId) and response.contactId != null and response.contactId != \"\") ? response.contactId : \"\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phone",
+                "jsonataExpression": "$exists(inputData.candidate.phoneNumber) and inputData.candidate.phoneNumber != null ? $string(inputData.candidate.phoneNumber) : ($exists(inputData.candidate.phoneNumbers) and $count(inputData.candidate.phoneNumbers) > 0 and inputData.candidate.phoneNumbers[0].phoneNumber != null ? $string(inputData.candidate.phoneNumbers[0].phoneNumber) : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mobilePhone",
+                "jsonataExpression": "$exists(inputData.candidate.phoneNumber) and inputData.candidate.phoneNumber != null ? $string(inputData.candidate.phoneNumber) : ($exists(inputData.candidate.phoneNumbers) and $count(inputData.candidate.phoneNumbers) > 0 and inputData.candidate.phoneNumbers[0].phoneNumber != null ? $string(inputData.candidate.phoneNumbers[0].phoneNumber) : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mailingStreet",
+                "jsonataExpression": "$exists(inputData.candidate.address) and inputData.candidate.address != null and $exists(inputData.candidate.address.addressLine1) and inputData.candidate.address.addressLine1 != null ? inputData.candidate.address.addressLine1 : ($exists(inputData.candidate.addresses) and $count(inputData.candidate.addresses) > 0 and $exists(inputData.candidate.addresses[0].addressLine1) and inputData.candidate.addresses[0].addressLine1 != null ? inputData.candidate.addresses[0].addressLine1 : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mailingCity",
+                "jsonataExpression": "$exists(inputData.candidate.address) and inputData.candidate.address != null and $exists(inputData.candidate.address.city) and inputData.candidate.address.city != null ? inputData.candidate.address.city : ($exists(inputData.candidate.addresses) and $count(inputData.candidate.addresses) > 0 and $exists(inputData.candidate.addresses[0].city) and inputData.candidate.addresses[0].city != null ? inputData.candidate.addresses[0].city : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mailingState",
+                "jsonataExpression": "$exists(inputData.candidate.address) and inputData.candidate.address != null and $exists(inputData.candidate.address.state) and inputData.candidate.address.state != null ? inputData.candidate.address.state : ($exists(inputData.candidate.addresses) and $count(inputData.candidate.addresses) > 0 and $exists(inputData.candidate.addresses[0].state) and inputData.candidate.addresses[0].state != null ? inputData.candidate.addresses[0].state : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mailingPostalCode",
+                "jsonataExpression": "$exists(inputData.candidate.address) and inputData.candidate.address != null and $exists(inputData.candidate.address.postalCode) and inputData.candidate.address.postalCode != null ? inputData.candidate.address.postalCode : ($exists(inputData.candidate.addresses) and $count(inputData.candidate.addresses) > 0 and $exists(inputData.candidate.addresses[0].postalCode) and inputData.candidate.addresses[0].postalCode != null ? inputData.candidate.addresses[0].postalCode : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "mailingCountry",
+                "jsonataExpression": "$exists(inputData.candidate.address) and inputData.candidate.address != null and $exists(inputData.candidate.address.country) and inputData.candidate.address.country != null ? inputData.candidate.address.country : ($exists(inputData.candidate.addresses) and $count(inputData.candidate.addresses) > 0 and $exists(inputData.candidate.addresses[0].country) and inputData.candidate.addresses[0].country != null ? inputData.candidate.addresses[0].country : \"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/services/data/v63.0/sobjects/Contact",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"FirstName\": \"${firstName}\", \"LastName\": \"${lastName}\", \"Email\": \"${email}\", \"Phone\": \"${phone}\", \"MobilePhone\": \"${mobilePhone}\", \"MailingStreet\": \"${mailingStreet}\", \"MailingCity\": \"${mailingCity}\", \"MailingState\": \"${mailingState}\", \"MailingPostalCode\": \"${mailingPostalCode}\", \"MailingCountry\": \"${mailingCountry}\", \"bpats__ATS_Is_Job_Board_Applicant__c\": false, \"bpats__Is_Resume_Parsed__c\": false, \"bpats__Parsing_Error__c\": false}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and success = true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": id, \"contactId\": id, \"success\": success, \"isCreated\": true}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(response.contactId) and response.contactId != null) ? {\"candidateId\": response.contactId, \"contactId\": response.contactId, \"success\": true, \"isCreated\": false} : response"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and ($exists(response.contactId) = false or response.contactId = null or response.contactId = \"\")"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-ats-applicant-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "{\"applicationId\": applicationId}"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "assymbl-contact-create",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contactId",
+                "jsonataExpression": "response.contactId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "($exists(inputData.application.customFields) and $exists(inputData.application.customFields.jobMetaData) and $exists(inputData.application.customFields.jobMetaData.additionalFields) and $exists(inputData.application.customFields.jobMetaData.additionalFields.firstStageId) and inputData.application.customFields.jobMetaData.additionalFields.firstStageId != null and inputData.application.customFields.jobMetaData.additionalFields.firstStageId != \"\") ? inputData.application.customFields.jobMetaData.additionalFields.firstStageId : (($exists(inputData.candidate.customFields) and $exists(inputData.candidate.customFields.jobMetaData) and $exists(inputData.candidate.customFields.jobMetaData.customStringFields) and $exists(inputData.candidate.customFields.jobMetaData.customStringFields.firstStageId) and inputData.candidate.customFields.jobMetaData.customStringFields.firstStageId != null and inputData.candidate.customFields.jobMetaData.customStringFields.firstStageId != \"\") ? inputData.candidate.customFields.jobMetaData.customStringFields.firstStageId : \"a06bn00000DStwZAAT\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "source",
+                "jsonataExpression": "$exists(inputData.application.source) and inputData.application.source != null ? inputData.application.source : \"Joveo\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/services/data/v63.0/sobjects/bpats__ATS_Applicant__c",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"bpats__Job__c\": \"${jobId}\", \"bpats__Stage__c\": \"${stageId}\", \"bpats__Job_Board_Applicant__c\": false, \"bpats__Rejected_By_Job_Closure__c\": false, \"bpats__ATS_Applicant__c\": \"${contactId}\", \"bpats__Contact_Job_Relationship__c\": \"${contactId} - ${jobId}\", \"bpats__Applicant_Status__c\": \"Active\", \"bpats__Internal_Source__c\": \"${source}\"}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and success = true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": id, \"success\": success}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$count($) > 0 ? {\"errorMessage\": $string($[0].message) & \" - \" & $string($[0].errorCode) & ($count($[0].fields) > 0 ? \" (Fields: \" & $join($[0].fields, \", \") & \")\" : \"\"), \"errorCode\": $string($[0].errorCode), \"fields\": $[0].fields} : {\"errorMessage\": \"Bad Request - Validation error\", \"errorCode\": \"400\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-application-resume-upload",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "assymbl-contact-create",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contactId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "$replace($replace($replace(inputData.application.attachment.attachmentFileName, \"%40\", \"@\"), \"%20\", \" \"), \"%2F\", \"/\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contentType",
+                "jsonataExpression": "$exists(inputData.application.attachment.attachmentContentType) and inputData.application.attachment.attachmentContentType != null ? inputData.application.attachment.attachmentContentType : \"application/pdf\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/services/data/v63.0/sobjects/ContentVersion",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"Title\": \"${fileName}\", \"PathOnClient\": \"${fileName}\", \"VersionData\": \"${fileContent}\", \"FirstPublishLocationId\": \"${contactId}\"}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"contentVersionId\": id, \"contentDocumentId\": ContentDocumentId, \"success\": true}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($.message) & \" - \" & $string($.errorCode)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed or attachment data not provided.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "assymbl-get-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.Id) }), function($acc, $v) { $acc and $v })"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($job) { { \"atsJobId\": $job.Id, \"refNumber\": $job.bpats__Job_Number__c, \"title\": $exists($job.bpats__Job_Title__c) ? $job.bpats__Job_Title__c : $job.Name, \"description\": $exists($job.bpats__Job_Description__c) ? $job.bpats__Job_Description__c : ($exists($job.bpats__Short_Description__c) ? $job.bpats__Short_Description__c : \"\"), \"url\": \"https://asymbl-joveo-tso.lightning.force.com/lightning/r/bpats__Job__c/\" & $job.Id & \"/view\", \"status\": ($exists($job.bpats__Status__c) and $uppercase($job.bpats__Status__c) = \"OPEN\") ? \"OPEN\" : ($exists($job.bpats__Status__c) and $uppercase($job.bpats__Status__c) = \"CLOSED\") ? \"CLOSED\" : ($exists($job.bpats__Status__c) and ($uppercase($job.bpats__Status__c) = \"DRAFT\" or $uppercase($job.bpats__Status__c) = \"DRAFTED\")) ? \"DRAFTED\" : ($exists($job.bpats__Status__c) and $uppercase($job.bpats__Status__c) = \"DELETED\") ? \"DELETED\" : \"DRAFTED\", \"company\": $exists($job.bpats__Account_Name__c) ? $job.bpats__Account_Name__c : \"\", \"remoteType\": $exists($job.bpats__Type__c) ? $job.bpats__Type__c : null, \"positionCategory\": $exists($job.bpats__Type__c) ? $job.bpats__Type__c : null, \"locations\": $exists($job.bpats__Location__c) and $job.bpats__Location__c != null ? [{ \"city\": \"\", \"state\": \"\", \"country\": \"\", \"postalCode\": \"\", \"isPrimary\": true, \"customFields\": { \"location\": $job.bpats__Location__c } }] : [], \"startDate\": $exists($job.bpats__Start_Date__c) and $job.bpats__Start_Date__c != null ? $fromMillis($toMillis($replace($job.bpats__Start_Date__c, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"endDate\": $exists($job.bpats__End_Date__c) and $job.bpats__End_Date__c != null ? $fromMillis($toMillis($replace($job.bpats__End_Date__c, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"createdDate\": $fromMillis($toMillis($replace($job.CreatedDate, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))), \"lastUpdatedDate\": $fromMillis($toMillis($replace($job.LastModifiedDate, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))), \"hiringManagers\": $exists($job.bpats__Hiring_Manager_Name__c) and $job.bpats__Hiring_Manager_Name__c != null ? [{ \"name\": $job.bpats__Hiring_Manager_Name__c, \"email\": $exists($job.bpats__Hiring_Manager_Email__c) ? $job.bpats__Hiring_Manager_Email__c : null, \"isPrimary\": true }] : [], \"insertedAt\": $now(), \"updatedAt\": $now(), \"isDeleted\": $exists($job.IsDeleted) ? $job.IsDeleted : false, \"customFields\": $merge([{ \"record\": $job }, (($exists($job.bpats__ATS_Stages__r) and $exists($job.bpats__ATS_Stages__r.records) and $count($job.bpats__ATS_Stages__r.records) > 0) ? { \"firstStageId\": $job.bpats__ATS_Stages__r.records[0].Id, \"firstStageName\": $exists($job.bpats__ATS_Stages__r.records[0].Name) ? $job.bpats__ATS_Stages__r.records[0].Name : \"Application\" } : {})]) } })]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_CUSTOM_FIELDS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/${jobGetUrl}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "jobGetUrl": "$exists(nextRecordsUrl) ? nextRecordsUrl : \"services/data/v63.0/query/?q=SELECT+Id,OwnerId,IsDeleted,Name,CreatedDate,CreatedById,LastModifiedDate,LastModifiedById,SystemModstamp,LastActivityDate,LastViewedDate,LastReferencedDate,bpats__ATS_Template__c,bpats__Account__c,bpats__Applicants_View__c,bpats__Benefits_Perks__c,bpats__Bill_Rate__c,bpats__Bonus__c,bpats__Conversion_Percentage__c,bpats__Delivery_Lead__c,bpats__End_Date__c,bpats__Estimated_Revenue__c,bpats__Experience__c,bpats__Fields_to_Display_on_Cards__c,bpats__Fixed_Fee__c,bpats__Guarantee_Period_Weeks__c,bpats__Hiring_Manager__c,bpats__Hiring_Multiple_Candidates__c,bpats__Index__c,bpats__Is_Active__c,bpats__Is_Closed__c,bpats__Job_Board_Field_Set_API_Name__c,bpats__Job_Description__c,bpats__Job_Number__c,bpats__Job_Title__c,bpats__Location__c,bpats__Number_Of_Mass_Actions__c,bpats__Number_of_Openings__c,bpats__Openings_Filled__c,bpats__Pay_Range__c,bpats__Pay_Rate__c,bpats__Placement_Fee__c,bpats__Post_Externally__c,bpats__Posted_Date__c,bpats__Priority__c,bpats__Related_Lists_to_Display__c,bpats__Salary__c,bpats__Sales_Lead__c,bpats__Shift__c,bpats__Short_Description__c,bpats__Show_ATS_Stages__c,bpats__Start_Date__c,bpats__Status__c,bpats__Tags__c,bpats__Today_Goal__c,bpats__Type__c,bpats__Urgent_Hiring__c,bpats__Work_Site_Location__c,(SELECT+Id,Name+FROM+bpats__ATS_Stages__r+ORDER+BY+bpats__Sequence__c+ASC+LIMIT+1)+FROM+bpats__Job__c+WHERE+LastModifiedDate+>=+${startDateTime}+AND+LastModifiedDate+<+${endDateTime}+ORDER+BY+LastModifiedDate+DESC\""
+            },
+            "paginationIndicatorJsonataExpression": "$exists(nextRecordsUrl)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": null,
+            "targetFields": [],
+            "targetOperation": null
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(assymbl_contact_create[0].candidateId) and $exists(assymbl_ats_applicant_create[0].applicationId)) ? {\"data\": {\"candidateId\": assymbl_contact_create[0].candidateId, \"applicationId\": assymbl_ats_applicant_create[0].applicationId, \"customFields\": {}}, \"errors\": null} : {\"data\": null, \"errors\": [{\"errorCode\": null, \"errorType\": null, \"message\": \"Failed to create contact or ATS applicant\", \"params\": {}}]}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "assymbl-get-application-stages",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($applicant) { { \"atsApplicationStageId\": null, \"atsJobId\": $exists($applicant.bpats__Job__c) ? $applicant.bpats__Job__c : null, \"atsApplicationId\": $exists($applicant.Id) ? $applicant.Id : null, \"atsCandidateId\": ($exists($applicant.bpats__Contact_Job_Relationship__c) and $applicant.bpats__Contact_Job_Relationship__c != null and $split($applicant.bpats__Contact_Job_Relationship__c, \" - \")[0] != null) ? ($split($applicant.bpats__Contact_Job_Relationship__c, \" - \")[0]) : ($exists($applicant.Id) ? $applicant.Id : null), \"stageId\": ($exists($applicant.bpats__Applicant_Status__c) and $applicant.bpats__Applicant_Status__c = \"Rejected\") ? \"Rejected\" : ($exists($applicant.bpats__Stage__c) ? $applicant.bpats__Stage__c : null), \"stageName\": ($exists($applicant.bpats__Applicant_Status__c) and $applicant.bpats__Applicant_Status__c = \"Rejected\") ? \"Rejected\" : ($exists($applicant.bpats__Stage__r) and $exists($applicant.bpats__Stage__r.Name) ? $applicant.bpats__Stage__r.Name : null), \"appliedAt\": $exists($applicant.CreatedDate) ? $fromMillis($toMillis($replace($applicant.CreatedDate, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"createdDate\": $exists($applicant.CreatedDate) ? $fromMillis($toMillis($replace($applicant.CreatedDate, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"lastUpdatedDate\": $exists($applicant.LastModifiedDate) ? $fromMillis($toMillis($replace($applicant.LastModifiedDate, /([+-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": { \"email\": $exists($applicant.bpats__Applicant_Email__c) ? $applicant.bpats__Applicant_Email__c : null, \"rejectionReason\": $exists($applicant.bpats__Asymbl_Rejection_Reason__c) ? $applicant.bpats__Asymbl_Rejection_Reason__c : null } } })]",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/${applicationStageGetUrl}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "applicationStageGetUrl": "$exists(nextRecordsUrl) ? nextRecordsUrl : \"services/data/v63.0/query/?q=SELECT+Id,bpats__Job__c,bpats__Contact_Job_Relationship__c,bpats__Applicant_Email__c,bpats__Applicant_Status__c,bpats__Asymbl_Rejection_Reason__c,bpats__Stage__c,bpats__Stage__r.Name,LastModifiedDate,CreatedDate+FROM+bpats__ATS_Applicant__c+WHERE+LastModifiedDate+>=+${startDateTime}+AND+LastModifiedDate+<+${endDateTime}+ORDER+BY+LastModifiedDate+DESC\""
+            },
+            "paginationIndicatorJsonataExpression": "$exists(nextRecordsUrl)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-application-stage-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "assymbl-update-application-status",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationStage.atsApplicationId) and inputData.applicationStage.atsApplicationId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationStage.stageName) and inputData.applicationStage.stageName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "assymbl-application-stage-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationStage.atsApplicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "inputData.applicationStage.stageId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PATCH",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://asymbl-joveo-tso.my.salesforce.com/services/data/v63.0/sobjects/bpats__ATS_Applicant__c/${applicationId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"bpats__Stage__c\": \"${stageId}\"}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 204,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": applicationId, \"stageId\": stageId, \"success\": true}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($[0].message) & \" - \" & $string($[0].errorCode)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationStage.atsApplicationId) and inputData.applicationStage.atsApplicationId != null and $exists(inputData.applicationStage.stageName) and inputData.applicationStage.stageName != null"
+            }
+          ]
+        }
+      ]
+    }
+  ]

@@ -1,0 +1,398 @@
+[
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "talos360-get-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.careersSiteVacancies",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$map($$, function($job) { \n  {\n    \"atsJobId\": $job.jobPostId,\n    \"refNumber\": $job.jobReference,\n    \"title\": $job.jobTitle,\n    \"description\": $job.jobDescription,\n    \"url\": $job.applyUrlRoute != null ? \"https://api-careers-sites.talos360.com\" & $job.applyUrlRoute : null,\n    \"locations\": [\n      {\n        \"isPrimary\": true,\n        \"city\": $job.city != null ? $job.city : $job.address,\n        \"state\": $job.county,\n        \"country\": $job.country,\n        \"postalCode\": $job.postcode,\n        \"customFields\": {\n          \"latitude\": $job.latitude,\n          \"longitude\": $job.longitude\n        }\n      }\n    ],\n    \"department\": null,\n    \"status\": \"OPEN\",\n    \"positionCategory\": null,\n    \"positionLevel\": null,\n    \"remoteType\": $job.remoteWork = true ? \"REMOTE\" : \"ONSITE\",\n    \"company\": \"${atsCustomerName}\",\n    \"recruiters\": [],\n    \"hiringManagers\": [],\n    \"createdDate\": $job.dateCreated != null ? $replace($job.dateCreated, /\\+.*$/, \"\") : null,\n    \"lastUpdatedDate\": $job.dateCreated != null ? $replace($job.dateCreated, /\\+.*$/, \"\") : null,\n    \"startDate\": null,\n    \"endDate\": $job.expiryDate != null ? $replace($job.expiryDate, /\\+.*$/, \"\") : null,\n    \"insertedAt\": $now(),\n    \"updatedAt\": $now(),\n    \"customFields\": {\n      \"jobPostJobBoardId\": $job.jobPostJobBoardId,\n      \"employmentType\": $job.employmentType,\n      \"employment\": $job.employment,\n      \"salaryFrom\": $job.salaryFrom,\n      \"salaryTo\": $job.salaryTo,\n      \"salaryDisplay\": $job.salaryDisplay,\n      \"salaryExtra\": $job.salaryExtra,\n      \"salaryType\": $job.salaryType,\n      \"salaryCurrencyCode\": $job.salaryCurrencyCode,\n      \"salaryCurrencySymbol\": $job.salaryCurrencySymbol,\n      \"businessTypes\": $job.businessTypes,\n      \"obfuscatedId\": $job.obfuscatedId,\n      \"daysSinceDateCreated\": $job.daysSinceDateCreated,\n      \"metadata\": $job.metadata,\n      \"documents\": $job.documents\n    },\n    \"isDeleted\": false\n  }\n})",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://api-careers-sites.talos360.com/api/careerssite/vacancies/search",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": "{\"careersSiteObfuscatedId\": \"${careersSiteObfuscatedId}\"}"
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(careersSiteVacancies)"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Failed to fetch jobs from Talos 360\"}"
+            }
+          ],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "talos360-create-application-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://api-applicants.talos360.com/api/candidate/external/create",
+          "headers": {
+            "Authorization": "HMACkeyId=${hmacId}",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "talos360-create-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "talos360-create-application-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobPostId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobPostJobBoardId",
+                "jsonataExpression": "inputData.candidate.customFields.jobMetaData.additionalFields.jobPostJobBoardId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobTitle",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.jobMetaData.additionalFields.title)? inputData.candidate.customFields.jobMetaData.additionalFields.title : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "externalId",
+                "jsonataExpression": "inputData.candidate.customerId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "$exists(inputData.candidate.phoneNumbers) and $count(inputData.candidate.phoneNumbers) > 0 ? inputData.candidate.phoneNumbers[0].phoneNumber : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "cvFileName",
+                "jsonataExpression": "$exists(inputData.application.attachment) ? inputData.application.attachment.attachmentFileName : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "cvContentType",
+                "jsonataExpression": "$exists(inputData.application.attachment) ? inputData.application.attachment.attachmentContentType : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "cvData",
+                "jsonataExpression": "$exists(inputData.application.attachment) ? inputData.application.attachment.attachmentContent : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "country",
+                "jsonataExpression": "$exists(inputData.candidate.address) ? inputData.candidate.address.country : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "postalCode",
+                "jsonataExpression": "$exists(inputData.candidate.address) ? inputData.candidate.address.postalCode : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://api-applicants.talos360.com/api/candidate/external/create",
+          "headers": {
+            "Authorization": "HMACkeyId=${hmacId}",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"jobInfo\": {\n    \"jobPostId\": \"${jobPostId}\",\n    \"jobPostJobBoardId\": \"${jobPostJobBoardId}\",\n    \"jobTitle\": \"${jobTitle}\"\n  },\n  \"applicantInfo\": {\n    \"externalId\": \"${externalId}\",\n    \"firstName\": \"${firstName}\",\n    \"lastName\": \"${lastName}\",\n    \"phoneNumber\": \"${phoneNumber}\",\n    \"email\": \"${email}\",\n    \"applicantCv\": {\n      \"fileName\": \"${cvFileName}\",\n      \"contentType\": \"${cvContentType}\",\n      \"data\": \"${cvData}\"\n    }\n  },\n  \"source\": \"Indeed\",\n  \"provider\": \"ATS Integration\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": \"${email}\", \"candidateId\": \"${email}\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": \"${email}\", \"candidateId\": \"${email}\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"status\": \"ERROR\",\n  \"message\": \"Bad Request: Invalid data provided\",\n  \"error\": $exists(message) ? message : \"Validation failed\"\n}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"status\": \"ERROR\",\n  \"message\": \"Unauthorized: Invalid authentication credentials\"\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"status\": \"ERROR\",\n  \"message\": \"Integration not executed\"\n}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "talos360-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://api-applicants.talos360.com/api/candidate/external/create",
+          "headers": {
+            "Authorization": "HMACkeyId=${hmacId}",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateIdPost := talos360_create_application[0].candidateId; $applicationId := talos360_create_application[0].id; $customFields := talos360_create_application[0].customFields; $exists($candidateIdPost) ? { \"data\": { \"candidateId\": $string($candidateIdPost), \"applicationId\": $string($applicationId), \"customFields\": $customFields }, \"errors\": null } : { \"data\": null, \"errors\": [{ \"errorCode\": null, \"errorType\": null, \"message\": $string($), \"params\": {} }] })"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ]

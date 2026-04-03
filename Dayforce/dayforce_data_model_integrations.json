@@ -1,0 +1,326 @@
+[
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "dayforce-posted-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.ReferenceNumber)}), function($acc, $v) { $acc and $v})"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($postedJob) {{ \n    \"atsJobId\": $postedJob.ReferenceNumber, \n    \"refNumber\": $postedJob.ReferenceNumber, \n    \"title\": $postedJob.Title, \n    \"description\": $postedJob.Description, \n    \"status\": \"OPEN\", \n    \"url\": $postedJob.ApplyUrl, \n    \"locations\": [\n        { \"country\": $postedJob.Country, \n        \"state\": $postedJob.State, \n        \"city\": $postedJob.City,\n        \"postalCode\": $postedJob.PostalCode, \n        \"countryIsoCode\":$postedJob.Country,\n        \"isPrimary\": true \n        }\n     ], \n    \"company\": $postedJob.CompanyName, \n    \"createdDate\": $fromMillis($toMillis($postedJob.DatePosted)),\n    \"lastUpdatedDate\":$fromMillis($toMillis($postedJob.LastUpdated)),\n    \"startDate\":$fromMillis($toMillis($postedJob.DatePosted)),\n    \"insertedAt\": $now(),\n    \"updatedAt\": $now()\n }})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/JobFeeds",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "dayforce-create-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/CandidateSourcing",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(dayforce_create_application[0].errorMessage))?{\n    \"data\":null,\n    \"errors\": [{\n        \"errorCode\":\"500\",\n        \"errorType\":\"Internal error\",\n        \"message\":\"Error while creating application on dayforce.\",\n        \"params\":{\n            \"dayforce_create_application\":$string(dayforce_create_application[0].errorMessages),\n            \"error\":$\n        }\n    }]\n\n}:{\n    \"data\":{\n      \"candidateId\":dayforce_create_application[0].candidateId,\n      \"applicationId\":dayforce_create_application[0].applicationId\n    }\n}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "dayforce-create-application-dummy",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/CandidateSourcing",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": null,
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "dayforce-get-questionnaire",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "dayforce-create-application-dummy",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobPostingId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/JobPostingQuestionnaires?jobPostingId=${jobPostingId}&clientNamespace=TLC&cultureId=1033",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": {},
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"questionIdMap\": $map($[type != \"pagebreak\"], function($question) {\n    {\n      \"question_id\": $question.id,\n      \"question_text\": $question.condition != null ?\n        $trim($lookup($[id = $question.condition.id], \"question\") & \"new\" & $question.question) :\n        $trim($question.question),\n      \"type\": $question.type,\n      \"options\": $map($question.options, function($option) {\n        {\n          \"option_id\": $option.value,\n          \"option_text\": $option.label\n        }\n      })\n    }\n  })\n}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n    \"errorMessage\":\"Get screener questions api failing , error : \"&''&$\n}"
+            },
+            {
+              "statusCode": 503,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because SERVICE_UNAVAILABLE,  error : \"&''&$}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "dayforce-create-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.application.atsJobId) and inputData.application.atsJobId!=null)\nand ($exists(inputData.candidate.firstName) and inputData.candidate.firstName!=null)\nand ($exists(inputData.candidate.email) and inputData.candidate.email!=null)\nand ($exists(inputData.candidate.phoneNumbers) and $count(inputData.candidate.phoneNumbers) > 0 )\nand ($exists(inputData.candidate.customFields.source) and inputData.candidate.customFields.source!=null)\nand ($exists(inputData.application.attachment) and inputData.application.attachment!=null)\n "
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "dayforce-get-questionnaire",
+            "dependencyFields": [],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/CandidateSourcing",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n    \"candidateSource\":\n    {\n        \"shortName\":$exists(inputData.candidate.customFields.publisherMetaData.utmTags[0].value)?inputData.candidate.customFields.publisherMetaData.utmTags[0].value:\"Joveo\"},\n        \"job\":\n        {\n            \"JobId\":inputData.application.atsJobId\n        },\n        \"applicant\":\n        {\n            \"fullName\":$join([inputData.candidate.firstName,\" \",inputData.candidate.lastName],\"\"),\n            \"firstName\":inputData.candidate.firstName,\n            \"lastName\":inputData.candidate.lastName,\n            \"coverletter\":$exists(inputData.candidate.customFields.candidateMetaData.customStringFields.coverLetter) and  inputData.candidate.customFields.candidateMetaData.customStringFields.coverLetter !=null ? inputData.candidate.customFields.candidateMetaData.customStringFields.coverLetter :inputData.candidate.customFields.coverLetter,\n            \"email\":inputData.candidate.email,\n            \"phoneNumber\":inputData.candidate.phoneNumbers[0].phoneNumber,\n            \"resume\":{\"File\":{\"Data\":inputData.application.attachment.attachmentContent,\n            \"FileName\":inputData.application.attachment.attachmentFileName}}},\n            \"Questions\":{\"Answers\":$filter($map($count(response.questionIdMap)!=0?response.questionIdMap:[],function($question){$lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$question.question_text)?{\"Id\":$question.question_id,\"value\":($question.type=\"select\"?($filter($question.options,function($option){$option.option_text=$lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$question.question_text)})[0].option_id):$lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$question.question_text))}:($lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$replace($question.question_text,\"withTouchmark\",\"with Touchmark\"))?{\"Id\":$question.question_id,\"value\":($question.type=\"select\"?($filter($question.options,function($option){$option.option_text=$lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$replace($question.question_text,\"withTouchmark\",\"with Touchmark\"))})[0].option_id):$lookup($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields:inputData.candidate.customFields.questionAnswers,$replace($question.question_text,\"withTouchmark\",\"with Touchmark\")))}:{})}),function($item){$count($keys($item))>0})}\n            \n        }",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists($.Identifier) and $.Identifier!=null) ? {\"candidateId\": $.Identifier, \"applicationId\": $.Identifier} :\n($exists($[0].Code) and $[0].Code='CANDIDATE_HAS_ALREADY_APPLIED') ? {\"candidateId\": \"${integrationId}\", \"applicationId\": \"${integrationId}\"}\n: {\"errorMessage\": $}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($)}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    }
+  ]

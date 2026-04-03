@@ -1,0 +1,2141 @@
+[
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-application-status-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "reponsehandler",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n    $customFields := function($keys) {\n        $merge(\n            $map($keys, function($key) {\n                { $key: $lookup($, $key) }\n            })\n        )\n    };\n    \n    $exists(eploy_application_status_update[0].newStatus) \n        ? {\n            \"data\": {\n                \"applicationId\": eploy_application_status_update[0].applicationId,\n                \"candidateId\": eploy_application_status_update[0].candidateId,\n                \"newStatus\": eploy_application_status_update[0].newStatus,\n                \"jobId\": eploy_application_status_update[0].jobId,\n                \"customFields\": $customFields([\"eploy_application_status_update\"])\n            },\n            \"errors\": []\n        } \n        : {\n            \"data\": null,\n            \"errors\": [{\n                \"errorCode\": null,\n                \"errorType\": null,\n                \"message\": $string($),\n                \"params\": {}\n            }]\n        }\n)"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eploy-get-job-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.Records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($)>0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($opportunity){\n    {\n        \"title\": $opportunity.Title,\n        \"atsJobId\": $opportunity.VacancyId,\n        \"refNumber\": $opportunity.VacancyId,\n        \"url\": $opportunity.WebsiteURLs[0],\n        \"description\": $opportunity.Description,\n        \"department\":$opportunity.Position.Description,\n        \"locations\":[{\n            \n                \"country\":$opportunity.Address.Country.Description?$opportunity.Address.Country.Description:null,\n                \"state\":$opportunity.Address.County?$opportunity.Address.County:null,\n                \"city\":$opportunity.Address.Town?$opportunity.Address.Town:null,\n                \"postalCode\":$opportunity.Address.PostCode?$opportunity.Address.PostCode:null,\n                \"countryIsoCode\":$opportunity.Address.Country.Reference?$opportunity.Address.Country.Reference:null,\n                \"isPrimary\": true,\n                \"customFields\":$opportunity.Address\n        }],\n        \"status\":$opportunity.VacancyStatus.Description=\"Live Requirement\"?\"OPEN\":\"CLOSED\",\n        \"positionCategory\":$opportunity.Position.Description,\n        \"company\": $opportunity.company!=null?$opportunity.company.name.en_us:\"Eploy\",\n        \"remoteType\":$opportunity.VacancyType.Description,\n        \"startDate\": $opportunity.CreationDate,\n        \"createdDate\": $opportunity.CreationDate,\n        \"lastUpdatedDate\":$opportunity.ModificationDate,\n        \"updatedAt\":$now(),\n        \"isDeleted\":$opportunity.VacancyStatus.Description=\"Live Requirement\"?false:true,\n        \"insertedAt\":$now()    }\n})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/vacancies/search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {
+              "Filters": [
+                {}
+              ],
+              "Paging": {
+                "RequestedPage": 1,
+                "RecordsPerPage": 500
+              },
+              "ResponseBlocks": [
+                "VacancyId",
+                "Title",
+                "InternalTitle",
+                "Import",
+                "ApplicationWorkflow",
+                "AutoSendWorkflowEmails",
+                "Description",
+                "Qualifications",
+                "Benefits",
+                "PrivateDescription",
+                "VacancyStatus",
+                "PositionsAvailable",
+                "BusinessArea",
+                "Location",
+                "AdditionalLocations",
+                "MaximumDistanceToTravel",
+                "Industry",
+                "AdditionalIndustries",
+                "Position",
+                "AdditionalPositions",
+                "VacancyType",
+                "CopiedFromVacancy",
+                "Users",
+                "Company",
+                "Contact",
+                "HiringManagers",
+                "Vendors",
+                "DisplaySalary",
+                "Salary",
+                "ReplacedEmployeeName",
+                "BudgetOptions",
+                "BusinessJustification",
+                "MaxVendorApplications",
+                "DisplayLogo",
+                "Websites",
+                "WebsiteURLs",
+                "IncludeOnSite",
+                "DatePosted",
+                "Advertising",
+                "AdvertisingEndDate",
+                "AdvertiseInternally",
+                "InternalAdvertisingStartDate",
+                "InternalAdvertisingEndDate",
+                "PayRate",
+                "RatesDescription",
+                "NoticeRequired",
+                "ReportTo",
+                "AllowCandidateTimeSheets",
+                "Address",
+                "InvoiceAddress",
+                "ReferralBonusSetting",
+                "Rates",
+                "Questions",
+                "Creator",
+                "Modifier",
+                "CreationDate",
+                "ModificationDate"
+              ]
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-application-status-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.oldStatus) and inputData.oldStatus != null and $exists(inputData.newStatus) and inputData.newStatus != null and $exists(inputData.applicationId) and inputData.applicationId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "dummyintegration",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because of dummy integration\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-get-options",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-application-status-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "inputData.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/options",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-get-options.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.oldStatus) and inputData.oldStatus != null and $exists(inputData.newStatus) and inputData.newStatus != null and $exists(inputData.applicationId) and inputData.applicationId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-get-application-stage-types",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-get-options",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageTypesDropdownId",
+                "jsonataExpression": "$filter(response.Options, function($option) { $option.Description = \"Application Stage Types\" })[0].Id",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageTypesDropdownId",
+                "jsonataExpression": "$filter(response.Options, function($option) { $option.Description = \"Application Stage Types\" })[0].Id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusDropdownId",
+                "jsonataExpression": "$filter(response.Options, function($option) { $option.Description = \"Vacancy Application Status\" })[0].Id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/options/dropdown/${stageTypesDropdownId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n  $parseStatusName := function($fullStatus) {\n    ($contains($fullStatus, \" - \")) ? {\n      \"stageName\": $split($fullStatus, \" - \")[0],\n      \"statusName\": $substring($fullStatus, $length($split($fullStatus, \" - \")[0]) + 3)\n    } : {\n      \"stageName\": $fullStatus,\n      \"statusName\": \"not found\"\n    }\n  };\n  \n  $findStageId := function($stageName, $data) {\n    ($exists($data.Values)) ? (\n      ($exists($filter($data.Values, function($s) { $s.Description = $stageName })[0])) ? $filter($data.Values, function($s) { $s.Description = $stageName })[0].Id : null\n    ) : (\n      ($exists($filter($data, function($s) { $s.Description = $stageName })[0])) ? $filter($data, function($s) { $s.Description = $stageName })[0].Id : null\n    )\n  };\n  \n  $parsedStatus := $parseStatusName(\"${newStatus}\");\n  \n  {\n    \"stageTypes\": $,\n    \"statusDropdownId\": \"${statusDropdownId}\",\n    \"stageId\": $findStageId($parsedStatus.stageName, $),\n    \"stageName\": $parsedStatus.stageName,\n    \"statusName\": $parsedStatus.statusName\n  }\n)"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-get-application-stage-types.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-get-vacancy-application-status",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-get-application-stage-types",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusDropdownId",
+                "jsonataExpression": "response.statusDropdownId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusDropdownId",
+                "jsonataExpression": "response.statusDropdownId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "response.stageId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusName",
+                "jsonataExpression": "response.statusName",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/options/dropdown/${statusDropdownId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n  $findStatusId := function($statusName, $data) {\n    ($exists($data.Values)) ? (\n      ($exists($filter($data.Values, function($s) { $s.Description = $statusName })[0])) ? $filter($data.Values, function($s) { $s.Description = $statusName })[0].Id : null\n    ) : (\n      ($exists($filter($data, function($s) { $s.Description = $statusName })[0])) ? $filter($data, function($s) { $s.Description = $statusName })[0].Id : null\n    )\n  };\n  \n  {\n    \"stageId\": \"${stageId}\",\n    \"statusId\": ((\"${statusName}\" != null and \"${statusName}\" != \"\" and \"${statusName}\" != \"not found\")) ? $findStatusId(\"${statusName}\", $) : \"not found\"\n  }\n)"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-get-vacancy-application-status.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-application-status-update",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.oldStatus) and inputData.oldStatus != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-get-vacancy-application-status",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "inputData.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "response.stageId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "response.stageId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusId",
+                "jsonataExpression": "response.statusId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "statusId",
+                "jsonataExpression": "response.statusId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "workflowBody",
+                "jsonataExpression": "(response.statusId != null and response.statusId != \"\" and response.statusId != \"null\" and response.statusId != \"not found\") ? $string({\"Workflow\":{\"stageId\":response.stageId,\"statusId\":response.statusId}}) : $string({\"Workflow\":{\"stageId\":response.stageId}})",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PATCH",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications/${applicationId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${workflowBody}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \n    \"applicationId\": \"${applicationId}\",\n    \"candidateId\": \"${candidateId}\",\n    \"newStatus\": \"${newStatus}\",\n    \"jobId\": \"${jobId}\"\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(error) and error != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"errorMessage\": $string(error), \"success\": false }"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(message) and message != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"errorMessage\": $string(message), \"success\": false }"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\", \"success\": false}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.oldStatus) and inputData.oldStatus != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eploy-applications-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.Records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.ApplicationId) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.Vacancy.Id) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.Candidate.Id) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.ApplicationDate) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.CreationDate) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.ModificationDate) }), function($acc, $v) { $acc and $v })"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[\n  $map($$, function($application) {\n    {\n      \"atsJobId\": $application.Vacancy.Id \n        ? $application.Vacancy.Id \n        : \"NOT_PROVIDED\",\n\n      \"atsCandidateId\": $application.Candidate.Id \n        ? $application.Candidate.Id \n        : \"NOT_PROVIDED\",\n\n      \"atsApplicationId\": $application.ApplicationId \n        ? $application.ApplicationId \n        : \"NOT_PROVIDED\",\n\n      \"status\": $exists($application.Workflow.Stage.Description) or $exists($application.Workflow.Status.Description) ?\n      (  $application.Workflow.Stage.Description \n        & ($application.Workflow.Status.Description \n            ? \"_\" & $application.Workflow.Status.Description \n            : '')):\"NO_STATUS\",\n\n      \"source\":  $application.Source != null ? $application.Source : \"NOT_PROVIDED\",\n\n      \"createdDate\": $application.ApplicationDate \n        ? $application.ApplicationDate \n        : $now(),\n\n      \"lastUpdatedDate\": $application.ModificationDate \n        ? $application.ModificationDate \n        : $now(),\n\n      \"insertedAt\": $now(),\n      \"updatedAt\": $now(),\n\n      \"customFields\": $application\n    }\n  })\n]\n",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/applications/search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "per_page",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "per_page": "200",
+              "page": "$exists(CurrentPage) ? $number(CurrentPage) + 1 : 1"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(CurrentPage) and $exists(TotalPages) and $number(CurrentPage) < $number(TotalPages)"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "Filters": [
+                {
+                  "Value": "${updated_after}",
+                  "Operation": "GreaterThan",
+                  "Route": "Application.ModificationDate"
+                },
+                {
+                  "Value": "${updated_before}",
+                  "Operation": "LessThan",
+                  "Route": "Application.ModificationDate"
+                }
+              ],
+              "Paging": {
+                "RequestedPage": "${page}",
+                "RecordsPerPage": "${per_page}"
+              },
+              "ResponseBlocks": [
+                "ApplicationId",
+                "ApplicationDate",
+                "User",
+                "ApplicationType",
+                "Source",
+                "InfluenceToApply",
+                "InfluenceToApplyDetail",
+                "InfluenceToApplyDescription",
+                "ApplicantTypes",
+                "ApplicationSuitability",
+                "WithdrawnReason",
+                "WithdrawnComments",
+                "Workflow",
+                "Salary",
+                "Rate",
+                "SupplierFee",
+                "AgencyFee",
+                "Vacancy",
+                "Candidate",
+                "Action",
+                "Placement",
+                "CV",
+                "AdminCV",
+                "CoverLetterContent",
+                "Comments",
+                "Questions",
+                "Creator",
+                "Modifier",
+                "CreationDate",
+                "ModificationDate",
+                "QuestionFields"
+              ]
+            }
+          },
+          "dateRangeConfig": {
+            "startDateTimeKey": "updated_after",
+            "endDateTimeKey": "updated_before",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-check-candidate-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates/search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n\"Paging\": {\n\"RecordsPerPage\": 10,\n\"RequestedPage\": 1\n},\n\"Filters\": [\n{ \n\"Route\": \"Candidate.Email\", \n\"Value\": \"${email}\",\n\"Operation\": \"Equals\"\n}\n],\n\"ResponseBlocks\": [\n\"CandidateID\",\n\"Firstname\",\n\"Surname\",\n\"Email\"\n]\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(Records) > 0 and $exists(Records[0].CandidateId)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": Records[0].CandidateId ,\"integrationId\":\"eploy-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(Records) = 0"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"integrationId\":\"eploy-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\" }"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-check-candidate-already-exists.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-create-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "streetAddress",
+                "jsonataExpression": "inputData.candidate.address.customFields.streetAddress ? inputData.candidate.address.customFields.streetAddress : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "inputData.candidate.address.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "country",
+                "jsonataExpression": "inputData.candidate.address.country",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "postalCode",
+                "jsonataExpression": "inputData.candidate.address.postalCode",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"FirstName\": \"${firstName}\",\n  \"Surname\": \"${lastName}\",\n  \"Mobile\": \"${phoneNumber}\",\n  \"email\": \"${email}\",\n  \"Address\": {\n    \"Address1\": \"${streetAddress}\",\n    \"Town\": \"${city}\",\n   \"CountryId\": \"${country}\",\n    \"PostCode\": \"${postalCode}\"\n  }\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(Id) and Id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":Id, \"integrationId\":\"eploy-create-candidate\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"eploy-create-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-create-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.candidateId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-upload-resume-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.application.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates/${candidateId}/upload/cv",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n                \"FileContent\": \"${attachmentContent}\",\n                \"FileTypeId\": 2\n            }",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "FileContent"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(Id) and Id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":\"${candidateId}\"}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed: Candidate or endpoint not found.\", \"integrationId\":\"eploy-upload-resume-one\",\"response\": $}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"eploy server error: \" & (error_message ? error_message : $string($)), \"integrationId\":\"eploy-upload-resume-one\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-upload-resume-one.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and\n$exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-create-application-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"VacancyId\": \"${atsJobId}\",\n  \"ApplicationDate\": $now(),\n  \"CandidateId\": \"${candidateId}\" \n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(Id) and Id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \n  \"applicationId\":Id,\n  \"candidateId\":\"${candidateId}\", \n  \"jobId\":\"${atsJobId}\" \n }"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-create-application-one.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null "
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-update-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "streetAddress",
+                "jsonataExpression": "inputData.candidate.address.customFields.streetAddress ? inputData.candidate.address.customFields.streetAddress : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "inputData.candidate.address.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "country",
+                "jsonataExpression": "inputData.candidate.address.country",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "postalCode",
+                "jsonataExpression": "inputData.candidate.address.postalCode",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PATCH",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates/${candidateId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"FirstName\": \"${firstName}\",\n  \"Surname\": \"${lastName}\",\n  \"Mobile\": \"${phoneNumber}\",\n  \"email\": \"${email}\",\n  \"Address\": {\n    \"Address1\": \"${streetAddress}\",\n    \"Town\": \"${city}\",\n   \"CountryId\": \"${country}\",\n    \"PostCode\": \"${postalCode}\"\n  }\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":\"${candidateId}\", \"integrationId\":\"eploy-update-candidate\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"eploy-update-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-create-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-create-application-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-update-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"VacancyId\": \"${atsJobId}\",\n  \"ApplicationDate\": $now(),\n  \"CandidateId\": \"${candidateId}\" \n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(Id) and Id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \n  \"applicationId\":Id,\n  \"candidateId\":\"${candidateId}\", \n  \"jobId\":\"${atsJobId}\" \n }"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-eploy-create-application-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null "
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eploy-get-all-applications",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "$.Records"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(Records) and $exists(TotalRecords)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/applications/search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "per_page",
+            "limitValue": 10,
+            "jsonataExpressionMap": {
+              "per_page": "10",
+              "page": "$exists(CurrentPage) ? $number(CurrentPage) + 1 : 1"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(CurrentPage) and $exists(TotalPages) and $number(CurrentPage) < $number(TotalPages)"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "Filters": [
+                {
+                  "Value": "${updated_after}",
+                  "Operation": "GreaterThan",
+                  "Route": "Application.ModificationDate"
+                },
+                {
+                  "Value": "${updated_before}",
+                  "Operation": "LessThan",
+                  "Route": "Application.ModificationDate"
+                }
+              ],
+              "Paging": {
+                "RequestedPage": "${page}",
+                "RecordsPerPage": "${per_page}"
+              },
+              "ResponseBlocks": [
+                "ApplicationId",
+                "ApplicationDate",
+                "User",
+                "ApplicationType",
+                "Source",
+                "InfluenceToApply",
+                "InfluenceToApplyDetail",
+                "InfluenceToApplyDescription",
+                "ApplicantTypes",
+                "ApplicationSuitability",
+                "WithdrawnReason",
+                "WithdrawnComments",
+                "Workflow",
+                "Salary",
+                "Rate",
+                "SupplierFee",
+                "AgencyFee",
+                "Vacancy",
+                "Candidate",
+                "Action",
+                "Placement",
+                "CV",
+                "AdminCV",
+                "CoverLetterContent",
+                "Comments",
+                "Questions",
+                "Creator",
+                "Modifier",
+                "CreationDate",
+                "ModificationDate",
+                "QuestionFields"
+              ]
+            }
+          },
+          "dateRangeConfig": {
+            "startDateTimeKey": "updated_after",
+            "endDateTimeKey": "updated_before",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eploy-get-candidate-email-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": " {\n    \"jobId\": \"${jobId}\",\n    \"candidateId\": \"${candidateId}\",\n    \"applicationId\": \"${applicationId}\",\n    \"stageName\":\"${stageName}\",\n    \"stageId\": \"${stageId}\",\n    \"appliedAt\": \"${appliedAt}\",\n    \"createdDate\": \"${createdDate}\",\n    \"lastUpdatedDate\":\"${lastUpdatedDate}\",\n    \"email\":$.Email\n}",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\": jobId,\n    \"atsCandidateId\": candidateId,\n    \"atsApplicationId\": applicationId,\n    \"stageId\": stageId,\n    \"stageName\": stageName, \n    \"appliedAt\": appliedAt,\n    \"createdDate\": createdDate,\n    \"lastUpdatedDate\": lastUpdatedDate,\n    \"insertedAt\": $now(),\n    \"updatedAt\": $now(),\n    \"customFields\": {\n        \"email\": email  \n    }\n}",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT",
+              "ATS_APPLICATION_APPLIED_DATE"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "eploy-get-all-applications",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "[$map($$, function($application) {\n $application.Candidate.Id\n})]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "[$map($$, function($application) {\n $application.Candidate.Id\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "[$map($$, function($application) {\n $application.Vacancy.Id\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "[$map($$, function($application) {\n $application.ApplicationId\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageName",
+                "jsonataExpression": "[$map($$, function($application) {$application.Workflow.Stage.Description & ($application.Workflow.Status.Description != null ? \" - \" &  $application.Workflow.Status.Description : \"\")})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "[$map($$, function($application) {\n $application.Workflow.Stage.Id & ($application.Workflow.Status.Id  ? '_'&$application.Workflow.Status.Id :'')\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appliedAt",
+                "jsonataExpression": "[$map($$, function($application) {\n  $fromMillis($toMillis($application.ApplicationDate))\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "createdDate",
+                "jsonataExpression": "[$map($$, function($application) {\n  $fromMillis($toMillis($application.ModificationDate))\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastUpdatedDate",
+                "jsonataExpression": "[$map($$, function($application) {\n  $fromMillis($toMillis($application.ModificationDate))\n})]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/candidates/${candidateId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "eploy-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(eploy_create_application_one[0].errorMessage)?\n($exists(eploy_create_application_two[0].errorMessage)?\n{\n    \"data\":null,\n    \"errors\":[{\n        \"errorCode\":\"500\",\n        \"errorType\":\"Internal error\",\n        \"message\":\"Error while creating application on ukg.\",\n        \"params\":{\n            \"eploy_create_application_one_error\":$string(eploy_create_application_one[0].errorMessages),\n            \"eploy_create_application_two_error\":$string(eploy_create_application_two[0].errorMessages),\n            \"error\":$string($)\n        }\n    }]\n}:\n{\n    \"data\":{\n      \"candidateId\":eploy_create_application_two[0].candidateId,\n      \"applicationId\":eploy_create_application_two[0].applicationId,\n      \"customFields\":{\n          \"jobId\":eploy_create_application_two[0].jobId,\n          \"fileId1\":$exists(ukg_upload_resume_applications_two[0].fileId)\n                    ?ukg_upload_resume_applications_two[0].fileId:\n                    $string(ukg_upload_resume_applications_two[0].errorMessages)\n      }\n    }\n}\n):\n{ \n    \"data\":{\n        \"candidateId\":eploy_create_application_one[0].candidateId,\n        \"applicationId\":eploy_create_application_one[0].applicationId,\n        \"customFields\":{\n          \"jobId\":eploy_create_application_one[0].jobId,\n          \"fileId1\":ukg_upload_resume_applications_one[0].fileId,\n          \"fileId2\":ukg_upload_resume_candidate_one[0].fileId \n   }\n    }\n})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eploy-candidate-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.Records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.CandidateId) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.FirstName) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.Surname) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.Email) and $v.Email != null and $v.Email != \"\" }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.CreationDate) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.ModificationDate) }), function($acc, $v) { $acc and $v })"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($candidate) { { \"atsCandidateId\": $candidate.CandidateId, \"firstName\": $candidate.FirstName ? $candidate.FirstName : \"Not Provided\", \"lastName\": $candidate.Surname ? $candidate.Surname : \"Not Provided\", \"email\": ($candidate.Email != null and $candidate.Email != \"\") ? $candidate.Email : \"notPresentOnAts@gmail.com\", \"phoneNumbers\": [$filter([{ \"isPrimary\": true, \"countryCode\": null, \"phoneNumber\": $candidate.Mobile, \"customFields\": { \"type\": \"Mobile\" } }, { \"isPrimary\": false, \"countryCode\": null, \"phoneNumber\": $candidate.Telephone, \"customFields\": { \"type\": \"Home\" } }, { \"isPrimary\": false, \"countryCode\": null, \"phoneNumber\": $candidate.WorkTelephone, \"customFields\": { \"type\": \"Work\", \"extension\": $candidate.WorkTelephoneExtension } }], function($v) { $v.phoneNumber != null and $v.phoneNumber != \"\" })], \"canEmail\": true, \"address\": { \"city\": $candidate.City?$candidate.City:$candidate.Address.Town, \"state\": $candidate.Address.County, \"country\": $candidate.Address.Country.Description, \"countryIsoCode\": null, \"postalCode\": $candidate.Address.PostCode, \"customFields\": { \"address1\": $candidate.Address.Address1, \"address2\": $candidate.Address.Address2, \"address3\": $candidate.Address.Address3, \"town\": $candidate.Address.Town, \"county\": $candidate.Address.County, \"country\": $candidate.Address.Country, \"postCode\": $candidate.Address.PostCode } }, \"links\": $candidate.WebsiteAddress ? [$candidate.WebsiteAddress] : [], \"createdDate\": $candidate.CreationDate, \"lastUpdatedDate\": $candidate.ModificationDate, \"customFields\": $candidate, \"insertedAt\": $now(), \"updatedAt\": $now() } })]",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/candidates/search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "per_page",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "per_page": "200",
+              "page": "$exists(CurrentPage) ? $number(CurrentPage) + 1 : 1"
+            },
+            "paginationIndicatorJsonataExpression": "$exists(CurrentPage) and $exists(TotalPages) and $number(CurrentPage) < $number(TotalPages)"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "Filters": [
+                {
+                  "Value": "${updated_after}",
+                  "Operation": "GreaterThan",
+                  "Route": "Candidate.ModificationDate"
+                },
+                {
+                  "Value": "${updated_before}",
+                  "Operation": "LessThan",
+                  "Route": "Candidate.ModificationDate"
+                }
+              ],
+              "Paging": {
+                "RequestedPage": "${page}",
+                "RecordsPerPage": "${per_page}"
+              },
+              "ResponseBlocks": [
+                "CandidateId",
+                "Import",
+                "Reference",
+                "Websites",
+                "City",
+                "Company",
+                "Contact",
+                "Users",
+                "Vendors",
+                "NINumber",
+                "Title",
+                "FirstName",
+                "MiddleName",
+                "Surname",
+                "MaidenName",
+                "Salutation",
+                "VocationalGuidance",
+                "ChildrenAges",
+                "Status",
+                "Address",
+                "Telephone",
+                "WorkTelephone",
+                "WorkTelephoneExtension",
+                "Telephone2",
+                "Fax",
+                "Mobile",
+                "Email",
+                "Email2",
+                "WebsiteAddress",
+                "DateOfBirth",
+                "Gender",
+                "Nationality",
+                "Nationality2",
+                "EthnicOrigin",
+                "Religion",
+                "ReligionOther",
+                "Sexuality",
+                "Disabilities",
+                "DisabilitiesDescription",
+                "DisabilityNumber",
+                "DisabilitiesEffect",
+                "SpecialArrangements",
+                "PresentHealth",
+                "CriminalRecord",
+                "CriminalRecordDescription",
+                "CRBDateSent",
+                "CRBDateReceived",
+                "WorkPermit",
+                "WorkPermitType",
+                "WorkPermitCountry",
+                "WorkPermitStatus",
+                "WorkPermitNumber",
+                "WorkPermitExpiryDate",
+                "WorkPermitVerificationDate",
+                "WorkPermitVerifier",
+                "WorkPermitComments",
+                "DrivingLicence",
+                "ProvisionalLicence",
+                "DatePassedTest",
+                "DrivingLicencePoints",
+                "OwnACar",
+                "Declaration",
+                "VerificationDate",
+                "RegularContact",
+                "RegularContactDate",
+                "OccasionalContact",
+                "OccasionalContactDate",
+                "ThirdPartyContact",
+                "ThirdPartyContactDate",
+                "EthnicOriginOther",
+                "CandidateLevel",
+                "CurrentEmployer",
+                "BusinessArea",
+                "CurrentPosition",
+                "PreferredPosition1",
+                "PreferredPosition1Other",
+                "PreferredPosition2",
+                "PreferredPosition2Other",
+                "PreferredPosition3",
+                "PreferredPosition3Other",
+                "PreferredJobTitle1",
+                "PreferredIndustry1",
+                "PreferredIndustry1Other",
+                "PreferredIndustry2",
+                "PreferredIndustry2Other",
+                "PreferredIndustry3",
+                "PreferredIndustry3Other",
+                "PreferredLocation1",
+                "PreferredLocation2",
+                "PreferredLocation3",
+                "Currency",
+                "CurrentRemuneration",
+                "CurrentBonus",
+                "RemunerationRequired",
+                "CurrentBenefits",
+                "MinimumSalary",
+                "MinimumRate",
+                "NoticeRequired",
+                "Keywords",
+                "Comments",
+                "PreferredJobDescription1",
+                "ReasonForLooking",
+                "IncludeCompanies",
+                "ExcludedCompanies",
+                "PreferredVacancyTypes",
+                "PreferredSubjects",
+                "LeisureInterests",
+                "SpecialAptitudes",
+                "TechnicalSkills",
+                "WillRelocate",
+                "DistanceToTravel",
+                "AvailableFromDate",
+                "AvailableToDate",
+                "Source",
+                "InfluenceToApply",
+                "InfluenceToApplyDetail",
+                "InfluenceToApplyDate",
+                "InfluenceToApplyDescription",
+                "EmploymentStatus",
+                "CandidateEmploymentStatus",
+                "ContactByType",
+                "ContactReferences",
+                "EducationPoints",
+                "IsEmployee",
+                "IsPreviousEmployee",
+                "WorkExperience",
+                "CurrentPositionOther",
+                "CandidateAddresses",
+                "CandidateBank",
+                "CandidateEmployment",
+                "CandidateExams",
+                "CandidateLanguages",
+                "CandidatePreferences",
+                "CandidateQualifications",
+                "CandidateReferences",
+                "CandidateSchools",
+                "CandidateUniversity",
+                "SystemLanguage",
+                "Questions",
+                "Creator",
+                "Modifier",
+                "CreationDate",
+                "ModificationDate",
+                "QuestionFields"
+              ]
+            }
+          },
+          "dateRangeConfig": {
+            "startDateTimeKey": "updated_after",
+            "endDateTimeKey": "updated_before",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

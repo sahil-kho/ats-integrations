@@ -1,0 +1,23 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://partners.apploi.com",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "ApiKeyAuthInfo",
+      "apiKeyId": "x-api-key",
+      "apiKeyValue": "********",
+      "authContext": "API_HEADER",
+      "staticHeaders": {},
+      "expiresInMillis": 0,
+      "customerOauthValues": {}
+    },
+    "customerAuthType": "API_KEY",
+    "lastDataSyncTime": "2026-03-31T07:47:12.346957047",
+    "nextDataSyncTime": "2026-03-31T15:30:14.473431006",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 6,
+    "dataSyncFrequencyInMinutes": 0
+  }

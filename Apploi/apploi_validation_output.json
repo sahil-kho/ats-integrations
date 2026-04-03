@@ -1,0 +1,13 @@
+{
+    "ats": "Apploi",
+  
+    "jobIngestion": "SUPPORTED",
+    "applicationApply": "SUPPORTED",
+    "funnelTracking": "PARTIAL",
+  
+    "issues": [
+      "updatedAt uses system time",
+      "pagination not configured",
+      "application stage missing required IDs"
+    ]
+  }

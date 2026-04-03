@@ -1,0 +1,35 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://www.dayforcehcm.com/api/tlc/V1",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "OAuth2Info",
+      "authContext": "API_HEADER",
+      "clientIdKey": "client_id",
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://dfid.dayforcehcm.com/connect/token",
+        "tokenJsonataExpression": "\"Bearer \" & access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "authorization",
+      "grantTypeValue": "password",
+      "expiresInMillis": 0,
+      "additionalParams": {},
+      "customerOauthValues": {},
+      "encodedClientSecretKey": "password",
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "OAUTH_2",
+    "lastDataSyncTime": "2026-03-31T01:21:47.187534352",
+    "nextDataSyncTime": "2026-03-31T13:30:11.742315594",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 10,
+    "dataSyncFrequencyInMinutes": 0
+  }

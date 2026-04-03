@@ -1,0 +1,3210 @@
+[
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-get-candidate-list",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.results",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$map($filter($, function($c) { $exists($c.name) and $c.name != null }), function($c) { { \"atsCandidateId\": $c.id, \"firstName\": $split($c.name, \" \")[0], \"lastName\": ($contains($c.name, \" \") ? $substringAfter($c.name, \" \") : \"\"), \"email\": ($c.primaryEmailAddress.value ? $c.primaryEmailAddress.value : ($c.emailAddresses[0].value ? $c.emailAddresses[0].value : null)), \"phoneNumbers\": [(( $c.phoneNumbers ? $c.phoneNumbers : ( $c.primaryPhoneNumber ? [ $c.primaryPhoneNumber ] : [] ) ) ~> $map(function($p) { { \"phoneNumber\": $p.value, \"isPrimary\": $p.isPrimary, \"countryCode\": null, \"customFields\": { \"type\": $p.type } } }))], \"canEmail\": null, \"address\": null, \"links\": (($type($c.socialLinks) = \"array\" ? $map($filter($c.socialLinks, function($l) { $exists($l.url) }), function($l) { $l.url }) : []) ~> $append($c.profileUrl ? [ $c.profileUrl ] : [])), \"workExperience\": (($c.position or $c.company) ? [ { \"title\": $c.position, \"company\": $c.company } ] : []), \"education\": ($c.school ? [ { \"institution\": $c.school } ] : []), \"createdDate\": $fromMillis($toMillis($c.createdAt)), \"lastUpdatedDate\": $fromMillis($toMillis($c.updatedAt)), \"customFields\": { \"customFields\": $c.customFields, \"tags\": $c.tags, \"fileHandles\": $c.fileHandles, \"resumeFileHandle\": $c.resumeFileHandle, \"source\": $c.source, \"creditedToUser\": $c.creditedToUser, \"timezone\": $c.timezone }, \"insertedAt\": $now(), \"updatedAt\": $now(), \"isDeleted\": false } })",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.list",
+          "headers": {
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 100,
+            "jsonataExpressionMap": {
+              "pageCursor": "($exists($.nextCursor) and $.nextCursor != null) ? $.nextCursor : ''"
+            },
+            "paginationIndicatorJsonataExpression": "$.moreDataAvailable"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "cursor": "${pageCursor}",
+              "limit": 100
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "ashby-job-post-webhook-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(jobId)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(title)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(isListed)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(externalLink)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(updatedAt)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"title\":title,\n    \"atsJobId\":jobId,\n    \"refNumber\":jobId,\n    \"url\":externalLink,\n    \"remoteType\":employmentType,\n    \"createdDate\":publishedDate,\n    \"lastUpdatedDate\":updatedAt,\n    \"startDate\":publishedDate,\n    \"endDate\":applicationDeadline.deadline,\n    \"updatedAt\":$now(),\n    \"isDeleted\":false,\n    \"insertedAt\":$now()\n}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_AUDIT",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-job-posting-api",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(success)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\":\"${jobId}\",\n    \"description\":$exists(results)?results.descriptionHtml:null,\n    \"locations\":$exists(results.address.postalAddress) ? \n    $map([results.address.postalAddress], function($address) {\n    [{\n      \"isPrimary\": true,\n      \"country\": $address.addressCountry,\n      \"state\": $address.addressRegion,\n      \"city\": $address.addressLocality,\n      \"postalCode\": $address.postalCode,\n       \"customFields\": {\n                         \"streetAddress\": $address.streetAddress\n                        }\n\n    }]\n    }) : null,\n    \"department\":$exists(results)?results.departmentName:null,\n    \"status\":$.success?\"OPEN\":\"CLOSED\",\n    \"positionCategory\":$exists(results)?results.teamName:null,\n    \"positionLevel\":$exists(results)?results.teamName:null,\n    \"company\":results.linkedData and results.linkedData.hiringOrganization?results.linkedData.hiringOrganization.name : null,\n    \"updatedAt\":$now(),\n    \"customFields\": results\n\n}",
+            "targetFields": [
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-job-post-webhook-integration",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "id",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "jobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "id",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/jobPosting.info",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {
+              "jobPostingId": "${id}"
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-check-candidate-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"email\": \"${email}\" \n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(results) > 0 and $exists(results[0].id) and $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results[0].id, \"integrationId\": \"ashby-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(results) = 0 and $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors, \"integrationId\": \"ashby-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\" }"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-check-candidate-already-exists.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "name",
+                "jsonataExpression": "inputData.candidate.firstName & ( $exists(inputData.candidate.lastName) and inputData.candidate.lastName !=null ? \" \" & inputData.candidate.lastName :\"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultLangdingPageSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\n  \"name\": \"${name}\",\n  \"email\": \"${email}\",\n   \"sourceId\": \"${sourceId}\"\n  \n},\n(\n    $exists(inputData.candidate.address.city) and inputData.candidate.address.city !=null\n    and\n    $exists(inputData.candidate.address.country) and inputData.candidate.address.country !=null\n    and\n    (\n        ($exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null)\n        or\n        ($exists(inputData.candidate.address.state) and inputData.candidate.address.state !=null)\n    )\n    ?\n    {\n         \"location\": {\n            \"city\": inputData.candidate.address.city,\n            \"region\":$exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null ?    inputData.candidate.customFields.questionAnswers.province : inputData.candidate.address.state,\n            \"country\": inputData.candidate.address.country\n        }\n    }\n    :\n    {\n\n    }\n),\n(       $exists(inputData.candidate.phoneNumbers.phoneNumber) and inputData.candidate.phoneNumbers.phoneNumber !=null and inputData.candidate.phoneNumbers.phoneNumber !=\"\"\n      ?\n      {\n          \"phoneNumber\": inputData.candidate.phoneNumbers.phoneNumber\n      }:\n      {\n      }\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl) and inputData.application.customFields.additionalFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl}:\n\n       ($exists(inputData.application.customFields.questionAnswers.linkedInUrl) and inputData.application.customFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.linkedInUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.githubUrl) and inputData.application.customFields.questionAnswers.additionalFields.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.additionalFields.githubUrl} :\n\n       ($exists(inputData.application.customFields.questionAnswers.githubUrl) and inputData.application.customFields.questionAnswers.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.githubUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.additionalFields.website} :\n       ($exists(inputData.application.customFields.questionAnswers.website) and inputData.application.customFields.questionAnswers.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : {})\n)\n\n])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-create-candidate\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"ashby-create-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.candidateId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-upload-resume-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$exists(inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId) and inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId != null ? inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId : \"talent_community_form\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.uploadResume",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n    \"candidateId\" : \"${candidateId}\" ,\n    \"resume\": \"${attachmentContent}\"\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "resume"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-upload-resume-one\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed: Candidate or endpoint not found.\", \"integrationId\":\"ashby-upload-resume-one\",\"response\": $}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"ashby server error: \" & (error_message ? error_message : $string($)), \"integrationId\":\"ashby-upload-resume-one\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-upload-resume-one.\", \"candidateId\": response.candidateId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-application-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultLangdingPageSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"candidateId\": \"${candidateId}\",\n  \"jobId\": \"${jobId}\",\n  \"sourceId\": \"${sourceId}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": results.id, \"candidateId\": \"${candidateId}\", \"jobId\": \"${jobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-application-one.\",\"candidateId\":\"${candidateId}\", \"jobId\":\"${jobId}\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId) and inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-candidate-custom-field-values-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-application-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.candidate.customFields.questionAnswers=null \n    and inputData.candidate.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter(\n        $keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields : inputData.candidate.customFields.questionAnswers),\n        function($key) {\n            $contains($key, \"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key) != null and ($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key) != \"\" or ($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key)[0] != \"\" and $count($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key)) > 0))\n        }\n    );\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Candidate\",\n        \"objectId\": $$.response.candidateId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$) : $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$)\n    }\n)]\n\n",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-candidate-custom-field-values-one\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.candidate.customFields.questionAnswers=null and \n    inputData.candidate.customFields.questionAnswers.additionalFields =null ? [] : \n    $filter([$keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields)? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)?$$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-update-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "name",
+                "jsonataExpression": "inputData.candidate.firstName & ( $exists(inputData.candidate.lastName) and inputData.candidate.lastName !=null ? \" \" & inputData.candidate.lastName :\"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultLangdingPageSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.update",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\"candidateId\" : \"${candidateId}\",\n  \"name\": \"${name}\",\n  \"email\": \"${email}\",\n   \"sourceId\": \"${sourceId}\"\n},\n(\n    $exists(inputData.candidate.address.city) and inputData.candidate.address.city !=null\n    and\n    $exists(inputData.candidate.address.country) and inputData.candidate.address.country !=null\n    and\n    (\n        ($exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null)\n        or\n        ($exists(inputData.candidate.address.state) and inputData.candidate.address.state !=null)\n    )\n    ?\n    {\n         \"location\": {\n            \"city\": inputData.candidate.address.city,\n            \"region\":$exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null ?    inputData.candidate.customFields.questionAnswers.province : inputData.candidate.address.state,\n            \"country\": inputData.candidate.address.country\n        }\n    }\n    :\n    {\n\n    }\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl) and inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl} :\n\n       ($exists(inputData.application.customFields.questionAnswers.linkedInUrl) and inputData.application.customFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.linkedInUrl} : {})\n),\n(       $exists(inputData.candidate.phoneNumbers.phoneNumber) and inputData.candidate.phoneNumbers.phoneNumber !=null and inputData.candidate.phoneNumbers.phoneNumber != \"\"\n      ?\n      {\n          \"phoneNumber\": inputData.candidate.phoneNumbers.phoneNumber\n      }:\n      {\n      }\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.githubUrl) and inputData.application.customFields.questionAnswers.additionalFields.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.additionalFields.githubUrl}:\n\n       ($exists(inputData.application.customFields.questionAnswers.githubUrl) and inputData.application.customFields.questionAnswers.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.githubUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : \n\n       ($exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : {})\n)\n\n])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":\"${candidateId}\", \"integrationId\":\"ashby-update-candidate\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"ashby-update-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-update-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-upload-resume-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-update-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$exists(inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId) and inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId != null ? inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId : \"talent_community_form\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.uploadResume",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n    \"candidateId\" : \"${candidateId}\" ,\n    \"resume\": \"${attachmentContent}\"\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "resume"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-upload-resume-two\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed: Candidate or endpoint not found.\", \"integrationId\":\"ashby-upload-resume-two\",\"response\": $}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"ashby server error: \" & (error_message ? error_message : $string($)), \"integrationId\":\"ashby-upload-resume-two\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-upload-resume-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-application-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultLangdingPageSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"candidateId\": \"${candidateId}\",\n  \"jobId\": \"${jobId}\",\n  \"sourceId\": \"${sourceId}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": results.id, \"candidateId\": \"${candidateId}\", \"jobId\": \"${jobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-application-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId) and inputData.application.customFields.questionAnswers.additionalFields.landingPagejobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-candidate-custom-field-values-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-application-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.candidate.customFields.questionAnswers=null \n    and inputData.candidate.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter(\n        $keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields : inputData.candidate.customFields.questionAnswers),\n        function($key) {\n            $contains($key, \"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key) != null and ($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key) != \"\" or ($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key)[0] != \"\" and $count($lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers, $key)) > 0))\n        }\n    );\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Candidate\",\n        \"objectId\": $$.response.candidateId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$) : $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$)\n    }\n)]\n\n",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-candidate-custom-field-values-two\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.candidate.customFields.questionAnswers=null and \n    inputData.candidate.customFields.questionAnswers.additionalFields =null ? [] : \n    $filter([$keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields)? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)?$$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "dummy",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-check-candidate-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.search",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"email\": \"${email}\" \n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(results) > 0 and $exists(results[0].id) and $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results[0].id, \"integrationId\": \"ashby-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$count(results) = 0 and $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors, \"integrationId\": \"ashby-check-candidate-already-exists\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\" }"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-check-candidate-already-exists.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "name",
+                "jsonataExpression": "inputData.candidate.firstName & ( $exists(inputData.candidate.lastName) and inputData.candidate.lastName !=null ? \" \" & inputData.candidate.lastName :\"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers.phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null ?\n    inputData.candidate.customFields.questionAnswers.province : inputData.candidate.address.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "country",
+                "jsonataExpression": "inputData.candidate.address.country",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultApplicantSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\n  \"name\": \"${name}\",\n  \"email\": \"${email}\",\n  \"phoneNumber\": \"${phoneNumber}\",  \n   \"sourceId\": \"${sourceId}\",\n   \"location\": {\n    \"city\": \"${city}\",\n    \"region\":\"${state}\",\n    \"country\": \"${country}\"\n  }\n},\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl) and inputData.application.customFields.additionalFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl}:\n\n       ($exists(inputData.application.customFields.questionAnswers.linkedInUrl) and inputData.application.customFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.linkedInUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.githubUrl) and inputData.application.customFields.questionAnswers.additionalFields.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.additionalFields.githubUrl} :\n\n       ($exists(inputData.application.customFields.questionAnswers.githubUrl) and inputData.application.customFields.questionAnswers.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.githubUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.additionalFields.website} :\n       ($exists(inputData.application.customFields.questionAnswers.website) and inputData.application.customFields.questionAnswers.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : {})\n)\n\n])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-create-candidate\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"ashby-create-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.candidateId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-upload-resume-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null ? inputData.application.atsJobId : \"talent_community_form\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.uploadResume",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n    \"candidateId\" : \"${candidateId}\" ,\n    \"resume\": \"${attachmentContent}\"\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "resume"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-upload-resume-one\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed: Candidate or endpoint not found.\", \"integrationId\":\"ashby-upload-resume-one\",\"response\": $}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"ashby server error: \" & (error_message ? error_message : $string($)), \"integrationId\":\"ashby-upload-resume-one\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-upload-resume-one.\", \"candidateId\": response.candidateId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-candidate-custom-field-values-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.candidate.customFields.questionAnswers=null \n    and inputData.candidate.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter([$keys( $exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ?$$.inputData.candidate.customFields.questionAnswers.additionalFields: $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Candidate\",\n        \"objectId\": $$.response.candidateId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $split($lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$),\";\") : $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$)\n\n    }\n)]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-candidate-custom-field-values-one\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.candidate.customFields.questionAnswers=null and \n    inputData.candidate.customFields.questionAnswers.additionalFields =null ? [] : \n    $filter([$keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields)? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)?$$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-application-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultApplicantSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"candidateId\": \"${candidateId}\",\n  \"jobId\": \"${jobId}\",\n  \"sourceId\": \"${sourceId}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": results.id, \"candidateId\": \"${candidateId}\", \"jobId\": \"${jobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-application-one.\",\"candidateId\":\"${candidateId}\", \"jobId\":\"${jobId}\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-application-custom-field-values-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-application-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.application.customFields.questionAnswers=null \n    and inputData.application.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter([$keys( $exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields: inputData.application.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Application_\") and $lookup($exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.application.customFields.questionAnswers.additionalFields) ?$$.inputData.application.customFields.questionAnswers.additionalFields: $$.inputData.application.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Application\",\n        \"objectId\": $$.response.applicationId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $split($lookup( $exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$),\";\") : $lookup( $exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$)\n\n    }\n)]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-application-custom-field-values-one\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null and $exists(response.applicationId) and response.applicationId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.application.customFields.questionAnswers=null and\n    inputData.application.customFields.questionAnswers.additionalFields=null ? [] : \n    $filter([$keys($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : inputData.application.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Application_\") and $lookup($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=null \n        and $lookup($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-update-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-check-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "name",
+                "jsonataExpression": "inputData.candidate.firstName & ( $exists(inputData.candidate.lastName) and inputData.candidate.lastName !=null ? \" \" & inputData.candidate.lastName :\"\")",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers.phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "city",
+                "jsonataExpression": "inputData.candidate.address.city",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "state",
+                "jsonataExpression": "$exists(inputData.candidate.customFields.questionAnswers.province) and inputData.candidate.customFields.questionAnswers.province !=null ?\n    inputData.candidate.customFields.questionAnswers.province : inputData.candidate.address.state",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "country",
+                "jsonataExpression": "inputData.candidate.address.country",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultApplicantSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.update",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([{\"candidateId\" : \"${candidateId}\",\n  \"name\": \"${name}\",\n  \"email\": \"${email}\",\n  \"phoneNumber\": \"${phoneNumber}\",  \n   \"sourceId\": \"${sourceId}\",\n   \"location\": {\n    \"city\": \"${city}\",\n    \"region\":\"${state}\",\n    \"country\": \"${country}\"\n  }\n},\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl) and inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.additionalFields.linkedInUrl} :\n\n       ($exists(inputData.application.customFields.questionAnswers.linkedInUrl) and inputData.application.customFields.questionAnswers.linkedInUrl !=null\n       ? {\"linkedInUrl\" : inputData.application.customFields.questionAnswers.linkedInUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.githubUrl) and inputData.application.customFields.questionAnswers.additionalFields.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.additionalFields.githubUrl}:\n\n       ($exists(inputData.application.customFields.questionAnswers.githubUrl) and inputData.application.customFields.questionAnswers.githubUrl !=null\n       ? {\"githubUrl\" : inputData.application.customFields.questionAnswers.githubUrl} : {})\n),\n(       $exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : \n\n       ($exists(inputData.application.customFields.questionAnswers.additionalFields.website) and inputData.application.customFields.questionAnswers.additionalFields.website !=null\n       ? {\"website\" : inputData.application.customFields.questionAnswers.website} : {})\n)\n\n])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":\"${candidateId}\", \"integrationId\":\"ashby-update-candidate\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": errorMessage,  \"integrationId\": \"ashby-update-candidate\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-update-candidate.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null  and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-upload-resume-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-update-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null ? inputData.application.atsJobId : \"talent_community_form\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/candidate.uploadResume",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{\n    \"candidateId\" : \"${candidateId}\" ,\n    \"resume\": \"${attachmentContent}\"\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "resume"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\": results.id, \"integrationId\": \"ashby-upload-resume-two\", \"jobId\": \"${atsJobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Resume upload failed: Candidate or endpoint not found.\", \"integrationId\":\"ashby-upload-resume-two\",\"response\": $}"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"ashby server error: \" & (error_message ? error_message : $string($)), \"integrationId\":\"ashby-upload-resume-two\"}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"getting 400 error\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-upload-resume-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-candidate-custom-field-values-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.candidate.customFields.questionAnswers=null \n    and inputData.candidate.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter([$keys( $exists(inputData.candidate.customFields.questionAnswers.additionalFields) ? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ?$$.inputData.candidate.customFields.questionAnswers.additionalFields: $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Candidate\",\n        \"objectId\": $$.response.candidateId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $split($lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$),\";\") : $lookup( $exists($$.inputData.candidate.customFields.questionAnswers.additionalFields) ? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$)\n\n    }\n)]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-candidate-custom-field-values-two\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.candidate.customFields.questionAnswers=null and \n    inputData.candidate.customFields.questionAnswers.additionalFields =null ? [] : \n    $filter([$keys($exists(inputData.candidate.customFields.questionAnswers.additionalFields)? inputData.candidate.customFields.questionAnswers.additionalFields: inputData.candidate.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Candidate_\") and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)? $$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.candidate.customFields.questionAnswers.additionalFields)?$$.inputData.candidate.customFields.questionAnswers.additionalFields : $$.inputData.candidate.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-create-application-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-upload-resume-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "sourceId",
+                "jsonataExpression": "(\n  $utmTags := inputData.candidate.customFields.publisherMetaData.utmTags;\n  ($exists($utmTags) and $utmTags != null and $count($utmTags)>0)?\n    (\n      $matches := $filter($utmTags, function($tags) { $tags.key = \"sourceId\" });\n      $count($matches) > 0 ? $matches[0].value : \"${defaultApplicantSourceId}\"\n    ) :\n    ($exists(inputData.candidate.customFields.publisherMetaData.trackParams.sourceId) and \n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId!=null)?\n    inputData.candidate.customFields.publisherMetaData.trackParams.sourceId:\n    \"${defaultApplicantSourceId}\"\n)",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.create",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"candidateId\": \"${candidateId}\",\n  \"jobId\": \"${jobId}\",\n  \"sourceId\": \"${sourceId}\"\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": results.id, \"candidateId\": \"${candidateId}\", \"jobId\": \"${jobId}\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-application-two.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-set-application-custom-field-values-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-create-application-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "reqPayload",
+                "jsonataExpression": "[(    \n    $customQuestionskey := (inputData.application.customFields.questionAnswers=null \n    and inputData.application.customFields.questionAnswers.additionalFields !=null) ? [] : \n\n    $filter([$keys( $exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields: inputData.application.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Application_\") and $lookup($exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=null \n        and $lookup($exists($$.inputData.application.customFields.questionAnswers.additionalFields) ?$$.inputData.application.customFields.questionAnswers.additionalFields: $$.inputData.application.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $AshbyCustomFieldStructure := $customQuestionskey.{\n        \"objectType\": \"Application\",\n        \"objectId\": $$.response.applicationId,\n        \"fieldId\": $split($,\"_\")[0],\n        \"fieldValue\": $contains($,\"_MultiValueSelect\") ? \n        $split($lookup( $exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$),\";\") : $lookup( $exists($$.inputData.application.customFields.questionAnswers.additionalFields) ? $$.inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$)\n\n    }\n)]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/customField.setValue",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${reqPayload}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(results.id) and results.id != null and  $exists($.success) and $.success=true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"customFieldId\": results.id, \"customFieldTitle\": results.title,\"customFieldValue\": results.value,\"integrationId\": \"ashby-set-application-custom-field-values-two\"}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists($.success) and $.success=false"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $.errors}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":errorMessage}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing-ashby-create-application-one.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null and $exists(response.applicationId) and response.applicationId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "(    \n    $customQuestionskey := inputData.application.customFields.questionAnswers=null and\n    inputData.application.customFields.questionAnswers.additionalFields=null ? [] : \n    $filter([$keys($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : inputData.application.customFields.questionAnswers)], function($key){\n        $contains($key,\"_CustomField_Application_\") and $lookup($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=null \n        and $lookup($exists(inputData.application.customFields.questionAnswers.additionalFields) ? inputData.application.customFields.questionAnswers.additionalFields : $$.inputData.application.customFields.questionAnswers,$key) !=\"\"\n    });\n\n    $count($customQuestionskey)>0\n)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-get-job-boards-list",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "$.results[isInternal=false]"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists($.success) and $.success = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/jobBoard.list",
+          "headers": {
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-get-jobs-list",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "$.results"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists($.success) and $.success = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-get-job-boards-list",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "oneJobBoardId",
+                "jsonataExpression": "[$map($, function($jobBoard) {$jobBoard.id})]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/jobPosting.list",
+          "headers": {
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": "{\n  \"listedOnly\": true,\n  \"jobBoardId\": \"${oneJobBoardId}\"\n}"
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-get-job-details",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$.results",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists($)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\": $.jobId,\n    \"refNumber\": $.jobId,\n    \"title\": $.title,\n    \"description\": $.descriptionHtml,\n    \"url\": $.externalLink,\n    \"status\": $exists($.isListed) and $.isListed !=null ? \"OPEN\" : \"CLOSED\",\n    \"department\": $.departmentName,\n    \"company\": $exists($.linkedData) and $exists($.linkedData.hiringOrganization) ? $.linkedData.hiringOrganization.name : \"New Story\",\n    \"locations\": $.address and $.address.postalAddress ? [{\n        \"city\": $.address.postalAddress.addressLocality,\n        \"state\": $.address.postalAddress.addressRegion,\n        \"country\": $.address.postalAddress.addressCountry,\n        \"isPrimary\": true,\n        \"postalCode\": $.address.postalAddress.postalCode,\n        \"customFields\": {\n                         \"streetAddress\": $.address.postalAddress.streetAddress\n                        }\n    }] : null,\n    \"createdDate\": $fromMillis($toMillis($.publishedDate)),\n    \"lastUpdatedDate\":  $fromMillis($toMillis($.updatedAt)),\n    \"startDate\":  $fromMillis($toMillis($.publishedDate)),\n    \"endDate\":  $exists($.applicationDeadline) and $.applicationDeadline != null ?  $fromMillis($toMillis($.applicationDeadline.deadline)) : null,\n    \"updatedAt\": $now(),\n    \"insertedAt\": $now(),\n    \"isDeleted\": $.isListed = false,\n    \"positionCategory\": $.teamName,\n    \"positionLevel\": $.teamName,\n    \"remoteType\": $.employmentType,\n     \"customFields\": $\n}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_AUDIT",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "ashby-get-jobs-list",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobPostingId",
+                "jsonataExpression": "[$map($, function($job) {\n    $job.id\n})]",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/jobPosting.info",
+          "headers": {
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": "{\n  \"jobPostingId\": \"${jobPostingId}\"\n}"
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(ashby_create_application_one[0].errorMessage)?\n($exists(ashby_create_application_two[0].errorMessage)?\n{\n    \"data\":null,\n    \"errors\":[{\n        \"errorCode\":\"500\",\n        \"errorType\":\"Internal error\",\n        \"message\":\"Error while creating application on ukg.\",\n        \"params\":{\n            \"ashby_create_application_one_error\":$string(ashby_create_application_one[0].errorMessages),\n            \"ashby_create_application_two_error\":$string(ashby_create_application_two[0].errorMessages),\n            \"error\":$string($)\n        }\n    }]\n}:\n{\n    \"data\":{\n      \"candidateId\":ashby_create_application_two[0].candidateId,\n      \"applicationId\":ashby_create_application_two[0].applicationId,\n      \"customFields\":{\n          \"jobId\":ashby_create_application_two[0].jobId,\n          \"fileId1\":$exists(ukg_upload_resume_applications_two[0].fileId)\n                    ?ukg_upload_resume_applications_two[0].fileId:\n                    $string(ukg_upload_resume_applications_two[0].errorMessages)\n      }\n    }\n}\n):\n{ \n    \"data\":{\n        \"candidateId\":ashby_create_application_one[0].candidateId,\n        \"applicationId\":ashby_create_application_one[0].applicationId,\n        \"customFields\":{\n          \"jobId\":ashby_create_application_one[0].jobId\n   }\n    }\n})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ashby-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "\n\n    (\n        (\n$exists(ashby_upload_resume_one[0].errorMessage)?\n($exists(ashby_upload_resume_two[0].errorMessage)?\n{\n    \"data\":null,\n    \"errors\":[{\n        \"errorCode\":\"500\",\n        \"errorType\":\"Internal error\",\n        \"message\":\"Error while creating candidate on ashby.\",\n        \"params\":{\n            \"ashby_upload_resume_one_error\":$string(ashby_upload_resume_one[0].errorMessages),\n            \"ashby_upload_resume_two_error\":$string(ashby_upload_resume_two[0].errorMessages),\n            \"error\":$string($)\n        }\n    }]\n}:\n{\n    \"data\":{\n      \"candidateId\":ashby_upload_resume_two[0].candidateId,\n      \"customFields\":$\n    }\n}\n):\n{ \n    \"data\":{\n        \"candidateId\":ashby_upload_resume_one[0].candidateId,\n        \"customFields\":$\n    }\n})\n\n    )\n\n"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "ashby-application-stage-webhook",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\r\n  \"atsApplicationId\": $string(id),\r\n  \"atsCandidateId\": $string(candidate.id),\r\n  \"atsJobId\": $string(job.id),\r\n  \"stageId\": $string(currentInterviewStage.id),\r\n  \"stageName\": currentInterviewStage.title,\r\n  \"appliedAt\": createdAt != null ? $fromMillis($toMillis(createdAt)) : null,\r\n  \"createdDate\": createdAt != null ? $fromMillis($toMillis(createdAt)) : null,\r\n  \"lastUpdatedDate\": updatedAt != null ? $fromMillis($toMillis(updatedAt)) : null,\r\n  \"insertedAt\": $now(),\r\n  \"updatedAt\": $now(),\r\n  \"customFields\": (customFields and $count(customFields) > 0) ? \r\n    $merge($map(customFields, function($f) { \r\n      { $f.title: ($f.valueLabel ? $f.valueLabel : $f.value) } \r\n    })) : {}\r\n}",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "ashby-application-webhook",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\r\n  \"atsApplicationId\": $string(id),\r\n  \"atsCandidateId\": $string(candidate.id),\r\n  \"atsJobId\": $string(job.id),\r\n  \"status\": status,\r\n  \"source\": source != null ? source.sourceType.title : null,\r\n  \"createdDate\": createdAt != null ? $fromMillis($toMillis(createdAt)) : null,\r\n  \"lastUpdatedDate\": updatedAt != null ? $fromMillis($toMillis(updatedAt)) : null,\r\n  \"customFields\": (customFields and $count(customFields) > 0) ? \r\n    $merge($map(customFields, function($f) { \r\n      { $f.title: ($f.valueLabel ? $f.valueLabel : $f.value) } \r\n    })) : {},\r\n  \"insertedAt\": $now(),\r\n  \"updatedAt\": $now()\r\n}",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-get-application-list",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.results",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append([], $map($filter($,\r\n      function($st){\r\n        $exists($st.id)\r\n        and $exists($st.candidate.id)\r\n        and $exists($st.job.id)\r\n      }\r\n    ),\r\n    function($st){{\r\n        \"atsApplicationId\": $string($st.id),\r\n        \"atsCandidateId\": $string($st.candidate.id),\r\n        \"atsJobId\": $string($st.job.id),\r\n        \"status\": $st.status,\r\n        \"source\": $st.source != null ? ($st.source.sourceType.title) : null,\r\n        \"createdDate\":\r\n          $st.createdAt != null ? $fromMillis($toMillis($st.createdAt)) : null,\r\n        \"lastUpdatedDate\":\r\n          $st.updatedAt != null ? $fromMillis($toMillis($st.updatedAt)) : null,\r\n        \"customFields\":\r\n          ($st.customFields and $count($st.customFields) > 0) ? $merge($map($st.customFields, function($f) { { $f.title: ($f.valueLabel ? $f.valueLabel : $f.value) } })) : {},\r\n        \"insertedAt\": $now(),\r\n        \"updatedAt\": $now()\r\n      }\r\n    }\r\n  )\r\n)",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.list",
+          "headers": {
+            "content-type": "application/json",
+            "accept": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 100,
+            "jsonataExpressionMap": {
+              "pageCursor": "($exists($.nextCursor) and $.nextCursor != null) ? $.nextCursor : ''"
+            },
+            "paginationIndicatorJsonataExpression": "$.moreDataAvailable"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "cursor": "${pageCursor}",
+              "limit": 100
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ashby-list-application-stage",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.results",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append([], $map($filter($, function($st) { $exists($st.id) and $exists($st.candidate.id) and $exists($st.currentInterviewStage) and $exists($st.currentInterviewStage.id) }), function($st) { { \"atsApplicationId\": $string($st.id), \"atsCandidateId\": $string($st.candidate.id), \"atsJobId\": $string($st.job.id), \"stageId\": $string($st.currentInterviewStage.id), \"stageName\": $st.currentInterviewStage.title, \"createdDate\": $st.createdAt != null ? $fromMillis($toMillis($st.createdAt)) : null, \"lastUpdatedDate\": $st.updatedAt != null ? $fromMillis($toMillis($st.updatedAt)) : null, \"customFields\": ($st.customFields and $count($st.customFields) > 0) ? $merge($map($st.customFields, function($f) { { $f.title: ($f.valueLabel ? $f.valueLabel : $f.value) } })) : {}, \"insertedAt\": $now(), \"updatedAt\": $now() } } ))",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT",
+              "ATS_APPLICATION_APPLIED_DATE"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/application.list",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 100,
+            "jsonataExpressionMap": {
+              "pageCursor": "($exists($.nextCursor) and $.nextCursor != null) ? $.nextCursor : ''"
+            },
+            "paginationIndicatorJsonataExpression": "$.moreDataAvailable"
+          },
+          "requestPayload": {
+            "requestBody": {
+              "cursor": "${pageCursor}",
+              "limit": 100
+            }
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

@@ -1,0 +1,2125 @@
+[
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "greenhouse-application-stage",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(candidate.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(last_activity_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applied_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(current_stage.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(current_stage.name)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(jobs[0].id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "current_stage.id!=\"deleted\""
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-candidate-api",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\"atsJobId\": ($currentApplication := [$filter(applications, function($v) {  $v.id = ${atsApplicationId}})]; $currentApplication.job_post_id) ,\"atsCandidateId\":\"${atsCandidateId}\",\"atsApplicationId\":\"${atsApplicationId}\",\"stageId\":\"${atsStageId}\",\"stageName\":\"${atsStageName}\",\"appliedAt\":\"${appliedAt}\",\"createdDate\":\"${lastActivityAt}\",\"lastUpdatedDate\":\"${lastActivityAt}\",\"insertedAt\":$now(),\"updatedAt\":$now(),\"customFields\":{\"source\":\"${source}\", \"email\": ($emails := [$filter(email_addresses, function($v) { $v.value != null })]; $count($emails) > 0 ? $emails[0].value : \"\")}}",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-application-stage",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "$string(candidate.id)",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "$string(jobs[0].id)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsCandidateId",
+                "jsonataExpression": "$string(candidate.id)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsApplicationId",
+                "jsonataExpression": "$string(id)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsStageId",
+                "jsonataExpression": "$string(current_stage.id)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsStageName",
+                "jsonataExpression": "current_stage.name",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appliedAt",
+                "jsonataExpression": "applied_at",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastActivityAt",
+                "jsonataExpression": "last_activity_at != null ? last_activity_at : $now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "source",
+                "jsonataExpression": "$exists(source) ? $exists(source.name) ? source.name : \"\" : \"\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates/${candidateId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "((($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null) or $exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)) and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-application-submission",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Greenhouse-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumbers[0].phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://boards-api.greenhouse.io/v1/boards/${joveo-job-board}/jobs/${atsJobId}",
+          "headers": {
+            "Authorization": "BASIC ${jobboardEncodedToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([\r\n    {\r\n        \"first_name\": inputData.candidate.firstName,\r\n        \"last_name\": inputData.candidate.lastName,\r\n        \"email\": inputData.candidate.email,\r\n        \"mapped_url_token\": $exists(inputData.candidate.customFields.publisherMetaData.utmTags.value) ? inputData.candidate.customFields.publisherMetaData.utmTags.value : $exists(inputData.candidate.customFields.publisherMetaData.trackParams.source) ? inputData.candidate.customFields.publisherMetaData.trackParams.source : \"Joveo\",\r\n        \"phone\": inputData.candidate.phoneNumbers[\r\n            0\r\n        ].phoneNumber\r\n    }, $merge( $map( $eval(inputData.candidate.customFields.jobMetaData.additionalFields.questions), function($q) { $exists($lookup(inputData.candidate.customFields.questionAnswers, $q.label)) ? ( $q.inputType='SELECT' ? ( $q.isMultiValue = true ? { ($q.id): [$map( $lookup(inputData.candidate.customFields.questionAnswers, $q.label), function($ans) { $filter($q.inputOptionList, function($opt) { $opt.label = $ans\r\n                    })[\r\n                        0\r\n                    ].value\r\n                } )\r\n            ]\r\n        } : { ($q.id): $filter($q.inputOptionList, function($opt) { $opt.label = $lookup(inputData.candidate.customFields.questionAnswers, $q.label)\r\n            })[\r\n                0\r\n            ].value\r\n        } ) : { ($q.id): $lookup(inputData.candidate.customFields.questionAnswers, $q.label)\r\n        } ) : {}\r\n    } ) ) , $exists(inputData.application.attachment.attachmentContent) ? {\r\n        \"resume_content\": inputData.application.attachment.attachmentContent\r\n    } : {}, $exists(inputData.application.attachment.attachmentFileName) ? {\r\n        \"resume_content_filename\": inputData.application.attachment.attachmentFileName\r\n    } : {}, $exists(inputData.candidate.customFields.questionAnswers.additionalFields)?inputData.candidate.customFields.questionAnswers.additionalFields: {}\r\n])\r\n",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(success) and success != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null) and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "greenhouse-job",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(job_id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(requisition_id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(job_post_id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(opened_at)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(departments)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(locations)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(title)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(content)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": job_post_id, \"refNumber\": job_post_id, \"createdDate\": ($exists(created_at) and created_at != null) ? created_at : null, \"lastUpdatedDate\": updated_at, \"insertedAt\": $now(), \"updatedAt\": $now(), \"department\": departments[0].name, \"remoteType\": employment_type,\"status\":status, \"customFields\": { \"job_id\": job_id, \"requisition_id\":requisition_id },\"title\":title,\"description\":content}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_URL",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-joveo-job-board-apply-url",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(title)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(content)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(absolute_url)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(questions)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"url\": absolute_url,\"atsJobId\": id,\"customFields\": $merge([customFields, {\n    \"questions\": {\n        \"ucpQuestions\":[], \n        \"additionalQuestions\": (\n    $inputType := function($input) { $input = \"input_text\" ? \"TEXT\" :$input = \"textarea\" ? \"TEXT_AREA\" : $input = \"multi_value_single_select\" ? \"SELECT\" : $input = \"multi_value_multi_select\" ? \"SELECT\" : $input = \"input_file\" ? \"RESUME\" : \"UNKNOWN\" };\n     $additionalField := function($input) { $substring($input, 0, 8) = \"question\" }; \n     $multiValueMultiSelectFieldName := function($input) { $input.type = \"multi_value_multi_select\" ? $replace($input.name, \"[]\", \"\"):$input.name};\n     $questionObj := function($srQuestion, $srQuestionField) \n     { \n         { \n            \"type\": \"QUESTION\", \n            \"id\": $multiValueMultiSelectFieldName($srQuestionField) , \n            \"label\": $srQuestion.label, \n            \"field\": \"additionalFields.\" & $multiValueMultiSelectFieldName($srQuestionField), \n            \"inputType\": $inputType($srQuestionField.type), \n            \"isMultiValue\": $srQuestionField.type = \"multi_value_multi_select\",\n            \"properties\": { \n                \"isMandatory\": $srQuestion.required \n            }, \n            \"inputOptionList\": $srQuestionField.values \n        } \n    }; \n          \n\n        $map($filter(questions, function($question) {$additionalField($question.fields[0].name)}),function($question) { \n              $questionObj($question, $question.fields[0])}) ), \n        \"surveyQuestions\": [], \n        \"consentQuestions\": []\n    }},\n    {\"salary_range\": $filter(metadata, function($v) { $v.value_type = \"currency_range\" })},  {\"salary_type\":$filter(metadata, function($v) { $v.name = \"Compensation Type\" })[0].value} ])}",
+            "targetFields": [
+              "ATS_JOB_ID",
+              "ATS_JOB_URL",
+              "ATS_JOB_CUSTOM_FIELDS"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-job",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "job_post_id",
+                "jsonataExpression": "[$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id,$.job_post_id]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "single-job-board",
+                "jsonataExpression": "['joveointegrationsandbox', 'adeedo','asi','hobaica','howardair','jwplumbingheatingair','proskill','ScottsdaleAir','servicechampions','servicewizard','timos','championsgroupholdings', 'twochairs']",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/${single-job-board}/jobs/${job_post_id}?questions=true",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-job-loc",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(offices)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\"atsJobId\": ${post_id},\"department\": departments[0].name, \"remoteType\": custom_fields.employment_type,\"locations\": ($locArr := $split(offices[0].location.name, \", \");$count($locArr) > 2 ?([{\"isPrimary\":true,\"city\": $locArr[0],\"state\": $locArr[1],\"country\": $locArr[2]}]): $count($locArr) > 1 ?([{\"isPrimary\":true,\"state\": $locArr[0],\"country\": $locArr[1]}]):[{\"isPrimary\":true,\"city\": $locArr[0]}])}",
+            "targetFields": [
+              "ATS_JOB_ID",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_DEPARTMENT"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-job",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "id",
+                "jsonataExpression": "job_id",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "post_id",
+                "jsonataExpression": "job_post_id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/jobs/${id}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/job_posts/",
+          "headers": {},
+          "queryParams": {
+            "active": "true",
+            "live": "true"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-job",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n  \"atsJobId\": id,\n  \"refNumber\": id,\n  \"createdDate\": ($exists(created_at) and created_at != null) ? created_at : null,\n  \"lastUpdatedDate\": updated_at,\n  \"insertedAt\": $now(),\n  \"updatedAt\": $now(),\n  \"department\": ($count(departments) > 0 and $exists(departments[0].name)) ? departments[0].name : null,\n  \"remoteType\": employment_type,\n  \"status\": status,\n  \"customFields\": { \"job_id\": id, \"requisition_id\": id, \"full_location\": ($exists(location) and $exists(location.name)) ? location.name : null },\n  \"title\": title,\n  \"description\": content,\n  \"locations\": (\n    ($exists(location) and $exists(location.name) and location.name != null and $type(location.name) = \"string\" and $trim(location.name) != \"\") ? (\n      ($count($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" })) = 0) ? null : (\n        ($count($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" })) = 3) ? [{\"isPrimary\": true, \"city\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0], \"state\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[1], \"country\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[2]}] : (\n          ($count($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" })) = 2) ? (\n            (($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"remote\") or ($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"Remote\") or ($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"REMOTE\")) ? [{\"isPrimary\": true, \"city\": \"Remote\", \"state\": \"Remote\", \"country\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[1]}] : [{\"isPrimary\": true, \"city\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0], \"state\": null, \"country\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[1]}]\n          ) : (\n            ($count($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" })) = 1) ? (\n              (($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"remote\") or ($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"Remote\") or ($trim($string(($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0])) = \"REMOTE\")) ? [{\"isPrimary\": true, \"city\": \"Remote\", \"state\": \"Remote\", \"country\": null}] : [{\"isPrimary\": true, \"city\": ($filter($map($split($trim(location.name), \",\"), function($s) { $trim($s) }), function($p) { $p != \"\" }))[0], \"state\": null, \"country\": null}]\n            ) : null\n          )\n        )\n      )\n    ) : null\n  )\n}",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_URL",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_LOCATIONS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-get-jobs",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "[$map($$, function($job) { $job.id })]",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/job_posts/${atsJobId}",
+          "headers": {},
+          "queryParams": {
+            "active": "true",
+            "live": "true"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-joveo-job-board-apply-url",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"url\": absolute_url,\"atsJobId\": id, \"company\": $exists($.company_name) ? company_name : \"\", \"customFields\": $merge([customFields, {\n    \"questions\": {\n        \"ucpQuestions\":[], \n        \"additionalQuestions\": (\n    $inputType := function($input) { $input = \"input_text\" ? \"TEXT\" :$input = \"textarea\" ? \"TEXT_AREA\" : $input = \"multi_value_single_select\" ? \"SELECT\" : $input = \"multi_value_multi_select\" ? \"SELECT\" : $input = \"input_file\" ? \"RESUME\" : \"UNKNOWN\" };\n     $additionalField := function($input) { $substring($input, 0, 8) = \"question\" }; \n     $multiValueMultiSelectFieldName := function($input) { $input.type = \"multi_value_multi_select\" ? $replace($input.name, \"[]\", \"\"):$input.name};\n     $questionObj := function($srQuestion, $srQuestionField) \n     { \n         { \n            \"type\": \"QUESTION\", \n            \"id\": $multiValueMultiSelectFieldName($srQuestionField) , \n            \"label\": $srQuestion.label, \n            \"field\": \"additionalFields.\" & $multiValueMultiSelectFieldName($srQuestionField), \n            \"inputType\": $inputType($srQuestionField.type), \n            \"isMultiValue\": $srQuestionField.type = \"multi_value_multi_select\",\n            \"properties\": { \n                \"isMandatory\": $srQuestion.required \n            }, \n            \"inputOptionList\": $srQuestionField.values \n        } \n    }; \n          \n\n        $map($filter(questions, function($question) {$additionalField($question.fields[0].name)}),function($question) { \n              $questionObj($question, $question.fields[0])}) ), \n        \"surveyQuestions\": [], \n        \"consentQuestions\": []\n    }},\n    {\"salary_range\": $filter(metadata, function($v) { $v.value_type = \"currency_range\" })},  {\"salary_type\":$filter(metadata, function($v) { $v.name = \"Compensation Type\" })[0].value} ])}",
+            "targetFields": [
+              "ATS_JOB_ID",
+              "ATS_JOB_URL",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_COMPANY"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-job",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "job_post_id",
+                "jsonataExpression": "[$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id,$.id]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "single-job-board",
+                "jsonataExpression": "['joveointegrationsandbox', 'adeedo','asi','hobaica','howardair','jwplumbingheatingair','proskill','ScottsdaleAir','servicechampions','servicewizard','timos','championsgroupholdings', 'twochairs']",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "/${single-job-board}/jobs/${job_post_id}?questions=true",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-get-job-loc",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(offices)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n  \"atsJobId\": ${post_id},\n  \"status\": $exists(status) and $.status = \"open\" ? \"OPEN\" : \"CLOSED\",\n  \"department\": departments[0].name,\n  \"remoteType\": custom_fields.employment_type\n}",
+            "targetFields": [
+              "ATS_JOB_ID",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS"
+            ],
+            "targetOperation": "UPDATE"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-job",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "id",
+                "jsonataExpression": "job_id",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "post_id",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/jobs/${id}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null) or ($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Greenhouse-candidate-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/prospects",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"first_name\":\"${firstName}\", \"last_name\":\"${lastName}\", \"email_addresses\": [{\"value\": \"${email}\",\"type\": \"personal\"}]}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(message) and message != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"errorMessage\": message}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-post-resumse-attachment",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Greenhouse-candidate-post",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "content",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contentType",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentContentType",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates/${candidateId}/attachments",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"filename\":\"${fileName}\", \"type\":\"resume\", \"content\":\"${content}\", \"content_type\":\"${contentType}\"}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(url) and url != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"resumeFilename\":$string(filename), \"resumeUrl\":$string(url), \"resumeType\":$string(type)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null) and $exists(inputData.candidate.attachment.attachmentFileName) and inputData.candidate.attachment.attachmentFileName != null and $exists(inputData.candidate.attachment.attachmentContent) and inputData.candidate.attachment.attachmentContent != null and $exists(inputData.candidate.attachment.attachmentContentType) and inputData.candidate.attachment.attachmentContentType != null and $exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-update",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Greenhouse-candidate-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "inputData.candidate.atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PATCH",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates/${candidateId}",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"first_name\":\"${firstName}\", \"last_name\":\"${lastName}\", \"email_addresses\": [{\"value\": \"${email}\",\"type\": \"personal\"}]}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(message) and message != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"errorMessage\": message}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-update-resumse-attachment",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Greenhouse-candidate-update",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "content",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "contentType",
+                "jsonataExpression": "inputData.candidate.attachment.attachmentContentType",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates/${candidateId}/attachments",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"filename\":\"${fileName}\", \"type\":\"resume\", \"content\":\"${content}\", \"content_type\":\"${contentType}\"}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(url) and url != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"resumeFilename\":$string(filename), \"resumeUrl\":$string(url), \"resumeType\":$string(type)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null and $exists(inputData.candidate.attachment.attachmentFileName) and inputData.candidate.attachment.attachmentFileName != null and $exists(inputData.candidate.attachment.attachmentContent) and inputData.candidate.attachment.attachmentContent != null and $exists(inputData.candidate.attachment.attachmentContentType) and inputData.candidate.attachment.attachmentContentType != null and $exists(response.candidateId) and response.candidateId != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "ATTACHMENT",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "greenhouse_attachment_data",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(candidateId)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicationId)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(filename)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(url)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsCandidateId\": candidateId,\n    \"atsApplicationId\": applicationId,\n    \"fileName\": filename,\n    \"link\": url,\n    \"atsAttachmentId\":id,\n    \"createdDate\": $now(),\n    \"insertedAt\": $now(),\n    \"updatedAt\": $now(),\n    \"customFields\": {\n        \"rawAttachment\": {\n            \"link\": url,\n            \"attachmentFileName\": filename,\n            \"attachmentType\" : \"RESUME\",\n            \"encodingType\" : \"BASE64\"\n        }\n    }\n}",
+            "targetFields": [
+              "JOVEO_ATTACHMENT_ID",
+              "JOVEO_ATTACHMENT_CANDIDATE_ID",
+              "JOVEO_ATTACHMENT_APPLICATION_ID",
+              "ATS_ATTACHMENT_ID",
+              "ATS_ATTACHMENT_CANDIDATE_ID",
+              "ATS_ATTACHMENT_APPLICATION_ID",
+              "ATS_ATTACHMENT_LINK",
+              "ATS_ATTACHMENT_FILE_NAME",
+              "ATS_ATTACHMENT_FILE_LENGTH",
+              "ATS_ATTACHMENT_CONTENT_TYPE",
+              "ATS_ATTACHMENT_CREATED_DATE",
+              "ATS_ATTACHMENT_LAST_UPDATED_DATE",
+              "ATS_ATTACHMENT_INSERTED_AT",
+              "ATS_ATTACHMENT_UPDATED_AT",
+              "ATS_ATTACHMENT_CUSTOM_FIELDS",
+              "ATS_ATTACHMENT_IS_DELETED",
+              "ATS_ATTACHMENT_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "greenhouse-application-status-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "$"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "dummyintegration",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because of dummy integration\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "greenhouse-fetch-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-application-status-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStatus",
+                "jsonataExpression": "inputData.newStatus",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/applications/${applicationId}",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"applicationId\": id, \"jobId\": jobs[0].id, \"currentStageId\": current_stage.id }"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because application ID or stage name might be missing or invalid stage name.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "greenhouse-get-job-stages",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{\"nextStage\": (  $findStageId := function($stageName) {    $[name = $stageName].id  };  $findStageId($$.inputData.newStatus)), \"inputData\":inputData, \"applicationId\": id, \"job_post_id\": job_post_id, \"currentStageId\": currentStageId }"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.currentStageId) and response.currentStageId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-fetch-application",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "response.jobId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "inputData",
+                "jsonataExpression": "inputData",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "currentStageId",
+                "jsonataExpression": "response.currentStageId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/jobs/${jobId}/stages",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id)"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"allStages\": $$, \"inputData\": ${inputData}, \"currentStageId\": ${currentStageId} }"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because application ID or stage name might be missing or invalid stage name.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null and $exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "greenhouse-application-stage-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-get-job-stages",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "currentStageId",
+                "jsonataExpression": "response.currentStageId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "newStageId",
+                "jsonataExpression": "response.allStages[name = $$.inputData.newStatus].id",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "inputData.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/applications/${applicationId}/move",
+          "headers": {
+            "Authorization": "BASIC ${harvestEncodedToken}",
+            "On-Behalf-Of": "4052730008"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"from_stage_id\":${currentStageId},\"to_stage_id\":${newStageId}}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"applicationId\": id, \"updatedStage\": current_stage }"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.oldStatus) and inputData.oldStatus != null and $exists(inputData.newStatus) and inputData.newStatus != null and $exists(inputData.applicationId) and inputData.applicationId != null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "greenhouse_candidate_data",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(first_name)"
+            },
+            {
+              "type": "NotNullRule",
+              "jsonataExpression": "first_name"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$merge([{\n  \"atsCandidateId\": id, \n  \"firstName\": first_name,\n  \"lastName\": ($exists(last_name) and last_name != null) ? last_name : \"\", \n  \"phoneNumbers\": phone_numbers,\n  \"education\": educations,\n  \"workExperience\": employments,\n  \"canEmail\": can_email,\n  \"links\": [url],\n  \"insertedAt\": $now(),\n  \"updatedAt\": $now(),\n  \"isDeleted\": status ='deleted'?true:false\n},\n$exists(email_addresses) ? {\n  \"email\": ($emails := [$filter(email_addresses, function($v) { $v.value != null })]; \n            $count($emails) > 0 ? $emails[0].value : \"\"),\n            \"customFields\": {\n    \"emails\": email_addresses,\n    \"attachments\": attachments, \n    \"recruiter\": recruiter, \n    \"coordinator\": coordinator, \n    \"addresses\": addresses\n  }\n} : {\"email\":\"temp@gmail.com\",\"customFields\": {\n    \"emails\": email_addresses,\n    \"attachments\": attachments, \n    \"recruiter\": recruiter, \n    \"coordinator\": coordinator, \n    \"addresses\": addresses\n  }}])",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-candidate-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates",
+          "headers": {
+            "Tenant": "apitest",
+            "x-api-key": "demo"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(  $candidateIdPost := Greenhouse_candidate_post[0].candidateId;  $candidateIdUpdate := Greenhouse_candidate_update[0].candidateId;  $customFields := function($keys) {    $merge(      $map($keys, function($key) {        { $key: $lookup($, $key) }      })    )  };  $exists($candidateIdPost) ?   {    \"data\": {      \"candidateId\": $string($candidateIdPost),      \"customFields\": $customFields([\"Greenhouse_candidate_post\", \"Greenhouse_candidate_post_resumse_attachment\"])    },    \"errors\": []  }  :  $exists($candidateIdUpdate) ?   {    \"data\": {      \"candidateId\": $string($candidateIdUpdate),      \"customFields\": $customFields([\"Greenhouse_candidate_update\", \"Greenhouse_candidate_update_resumse_attachment\"])    },    \"errors\": []  }  :  {    \"data\": null,    \"errors\": [{\"errorCode\":null, \"errorType\":null, \"message\":$string($), \"params\":{}}]  })"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "greenhouse-application-data",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(candidate.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(last_activity_at)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$merge([{\"atsCandidateId\": candidate.id,\"atsApplicationId\": id,\"status\": status,\"source\": $exists(source)?source.name:null,\"createdDate\": $exists(applied_at)?applied_at:null,\"lastUpdatedDate\": last_activity_at,\"insertedAt\": $now(),\"updatedAt\": $now()},$exists(source)?{\"customFields\": {\"source\":source}}:{}, $exists(jobs)?{\"atsJobId\":jobs[0].id}:{\"atsJobId\":\"tempJobId\"}])",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-list-candidates",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($filter($, function($c) { $exists($c.id) and $c.id != null and $c.email_addresses[0].value != null }), function($c) { { \"atsCandidateId\": $c.id, \"firstName\": $c.first_name ? $c.first_name : \"\", \"lastName\": $c.last_name ? $c.last_name : \"\", \"email\": $c.email_addresses[0].value, \"phoneNumbers\": $append([], $c.phone_numbers ~> $map(function($p) { { \"phoneNumber\": $p.value, \"isPrimary\": null, \"countryCode\": null, \"customFields\": { \"type\": $p.type } } })), \"canEmail\": $c.can_email, \"address\": ($exists($c.addresses) and $count($c.addresses) > 0) ? { \"customFields\": { \"fullAddress\": $c.addresses[0].value, \"type\": $c.addresses[0].type } } : null, \"links\": null, \"workExperience\": $append([], $c.employments ~> $map(function($e) { { \"title\": $e.title, \"company\": $e.company_name, \"startDate\": $e.start_date, \"endDate\": $e.end_date } })), \"education\": $append([], $c.educations ~> $map(function($edu) { { \"institution\": $edu.school_name, \"degree\": $edu.degree, \"major\": $edu.discipline } })), \"createdDate\": $c.created_at, \"lastUpdatedDate\": $c.updated_at, \"customFields\": { \"customFields\": $c.custom_fields, \"tags\": $c.tags, \"attachments\": $c.attachments }, \"insertedAt\": $now(), \"updatedAt\": $now(), \"isDeleted\": false } })]",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-list-active-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "{\"activeJobPostIds\": [id] }",
+            "resPassingJsonataExpression": "{\"activeJobPostIds\": [id] }"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/job_posts",
+          "headers": {},
+          "queryParams": {
+            "active": "true",
+            "live": "true"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-list-applications",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$[job_post_id != null and current_stage !=null ], function($all) { { \"atsApplicationId\": $string($all.id), \"atsCandidateId\": $string($all.candidate_id), \"atsJobId\": $string($all.job_post_id), \"status\": $all.status, \"source\": $all.source.id != null ? $all.source.public_name : null, \"answers\": $all.answers != null ? [$map($all.answers, function($a) { { \"answerType\": \"SINGLE\", \"question\": { \"label\": $a.question }, \"answer\": $a.answer } })] : [], \"createdDate\": $all.applied_at != null ? $fromMillis($toMillis($all.applied_at)) : null, \"lastUpdatedDate\": $all.last_activity_at != null ? $fromMillis($toMillis($all.last_activity_at)) : null, \"customFields\": $all.custom_fields != null ? $all.custom_fields : {}, \"insertedAt\": $now(), \"updatedAt\": $now() } })]",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_ANSWERS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT",
+              "ATS_APPLICATION_TAGS",
+              "ATS_APPLICATION_CUSTOM_FIELDS",
+              "ATS_APPLICATION_IS_DELETED",
+              "ATS_APPLICATION_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "greenhouse-list-active-jobs",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "activeJobPostIds",
+                "jsonataExpression": "activeJobPostIds",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "ALL_ENTITIES"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "greenhouse-list-application-stage",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$append([], $map($filter($, function($st) { $exists($st.id) and $st.id != null and $st.job_post_id != null and (($exists($st.status) and $st.status = \"active\") ? ($exists($st.current_stage) and $exists($st.current_stage.id)) : ($exists($st.status) and $st.status != null)) }), function($st) { { \"atsApplicationId\": $string($st.id), \"atsCandidateId\": $string($st.candidate_id), \"atsJobId\": $string($st.job_post_id), \"stageId\": ($exists($st.status) and $st.status = \"active\") ? $string($st.current_stage.id) : $lowercase($string($st.status)), \"stageName\": ($exists($st.status) and $st.status = \"active\") ? $st.current_stage.name : ($uppercase($substring($lowercase($string($st.status)), 0, 1)) & $substring($lowercase($string($st.status)), 1)), \"createdDate\": $st.applied_at != null ? $fromMillis($toMillis($st.applied_at)) : null, \"lastUpdatedDate\": $st.last_activity_at != null ? $fromMillis($toMillis($st.last_activity_at)) : null, \"customFields\": $st.custom_fields != null ? $st.custom_fields : {}, \"insertedAt\": $now(), \"updatedAt\": $now() }}))",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT",
+              "ATS_APPLICATION_APPLIED_DATE"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/applications",
+          "headers": {},
+          "queryParams": {
+            "last_activity_after": "${startDateTime}",
+            "last_activity_before": "${endDateTime}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 100,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "greenhouse-application-status-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/",
+          "headers": {
+            "Tenant": "apitest",
+            "x-api-key": "demo"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(  $applicationIdPost := ($exists(greenhouse_application_stage_post[0].applicationId) ? greenhouse_application_stage_post[0].applicationId : null);  $errorMessage := pinpoint_update_application_stage[0].errorMessage;   \n $is422Error := $contains($errorMessage, \"Integration not executed because application ID or stage name might be missing or invalid\");  \n $applicationIdPost != null and greenhouse_get_job_stages.inputData.newStatus =  greenhouse_application_stage_post.updatedStage.name ?      \n    {       \n        \"data\": {        \n           \"applicationId\": $applicationIdPost,        \"customFields\": {} \n         }, \n         \"errors\": null     \n     } :      \n     $is422Error ?  \n         { \n             \"data\": null, \n             \"errors\": [ \n                 {          \"errorCode\": \"422\",          \"errorType\": \"ERROR\",          \"message\": \"Invalid stage for application\",          \"params\": {}         \n                 } \n             ] \n         } : \n         { \n             \"data\": null, \n             \"errors\": [ \n                 {          \"errorCode\": \"500\",          \"errorType\": \"ERROR\",          \"message\": $string($),          \"params\": {} \n                 } \n             ]       \n         } \n )"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://harvest.greenhouse.io/v1/candidates",
+          "headers": {
+            "Tenant": "apitest",
+            "x-api-key": "demo"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $applicationIdPostStatus := Greenhouse_application_submission[0].success;  $exists($applicationIdPostStatus) ?   {     \"data\": {       \"candidateId\": null,       \"applicationId\": null},     \"errors\": []   }: {     \"data\": null,     \"errors\": [{       \"errorCode\": null,       \"errorType\": null,       \"message\": $string($),       \"params\": {}     }]   } ) "
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ]

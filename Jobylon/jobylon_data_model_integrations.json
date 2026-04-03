@@ -1,0 +1,569 @@
+[
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "Jobylon-application-stage",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.status.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.status.name)"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\": application.job.id,\n    \"atsCandidateId\": application.id,\n    \"atsApplicationId\": application.id,\n    \"stageId\": application.status.id,\n    \"stageName\": application.status.name,\n    \"appliedAt\":$now(),\n    \"createdDate\":$now(),\n    \"lastUpdatedDate\":$now(),\n    \"insertedAt\":$now(),\n    \"updatedAt\":$now(),\n    \"customFields\": {\n        \"source\":application.source_type,\n        \"email\" : application.email\n    }\n}",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobylon-application-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "p1/applications/",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($exists(Jobylon_application_create[0].errorMessage))?{\n    \"data\":null,\n    \"errors\": [{\n        \"errorCode\":\"500\",\n        \"errorType\":\"Internal error\",\n        \"message\":\"Error while creating application on Jobylon.\",\n        \"params\":{\n            \"Jobylon_application_create\":$string(Jobylon_application_create[0].errorMessages),\n            \"error\":$\n        }\n    }]\n\n}:{\n    \"data\":{\n      \"candidateId\":Jobylon_application_create[0].candidateId,\n      \"applicationId\":Jobylon_application_create[0].applicationId\n    }\n}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB_QUESTION",
+      "integrationType": "REST_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobylon-job-questions-to-joveo-questions",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "/feeds/${feedHash}/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParams": {
+            "format": "json"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n   $firstOrSelf := function($value) {\n     $type($value) = \"array\" ? (($count($value) > 0) ? $value[0] : {}) : ($exists($value) ? $value : {})\n   };\n   $questionsPayload := $firstOrSelf(jobylon_get_job_questions);\n   $formPayload := $firstOrSelf(jobylon_get_job_form_fields);\n   $results := $type($questionsPayload.results) = \"array\" ? $questionsPayload.results : [];\n   $required_fields := $type($formPayload.required_fields) = \"array\" ? $formPayload.required_fields : [];\n   $optional_fields := $type($formPayload.optional_fields) = \"array\" ? $formPayload.optional_fields : [];\n   $hidden_fields := $type($formPayload.hidden_fields) = \"array\" ? $formPayload.hidden_fields : [];\n   $allFormFields := $distinct($append($required_fields, $optional_fields));\n   $isRequired := function($fieldName) {\n     $count($required_fields[$ = $fieldName]) > 0\n   };\n   $isHidden := function($fieldName) {\n     $count($hidden_fields[$ = $fieldName]) > 0\n   };\n   $inputType := function($choiceType) {\n     $choiceType = \"yes-no\" ? \"RADIO\" :\n     $choiceType = \"select-one\" ? \"SELECT\" :\n     $choiceType = \"select-multiple\" ? \"SELECT\" :\n     $choiceType = \"file\" ? \"FILE_UPLOAD\" :\n     \"TEXT\"\n   };\n   $isMultiValue := function($choiceType) {\n     $choiceType = \"select-multiple\"\n   };\n   $inputOptionListObj := function($choices) {\n     $type($choices) = \"array\" ?\n       ($count($choices) > 0 ? $map($choices, function($choice) {\n         {\n           \"label\": $string($choice),\n           \"value\": $string($choice)\n         }\n       }) : [])\n       : []\n   };\n   $inputValidationObj := function($choiceType, $choices) {\n     $choiceType = \"select-multiple\" ? {\n       \"maxSelections\": $type($choices) = \"array\" ? $count($choices) : 0\n     } : null\n   };\n   $standardFieldMeta := function($fieldName) {\n     $fieldName = \"first_name\" ? {\n       \"id\": \"first_name\",\n       \"label\": \"First Name\",\n       \"field\": \"firstName\",\n       \"inputType\": \"TEXT\"\n     } :\n     $fieldName = \"last_name\" ? {\n       \"id\": \"last_name\",\n       \"label\": \"Last Name\",\n       \"field\": \"lastName\",\n       \"inputType\": \"TEXT\"\n     } :\n     $fieldName = \"email\" ? {\n       \"id\": \"email\",\n       \"label\": \"Email\",\n       \"field\": \"email\",\n       \"inputType\": \"TEXT\"\n     } :\n     $fieldName = \"phone_number\" ? {\n       \"id\": \"phone_number\",\n       \"label\": \"Phone Number\",\n       \"field\": \"phoneNumber\",\n       \"inputType\": \"PHONE\",\n       \"inputOptionList\": [\n          {\n            \"label\": \"Afghanistan (+93)\",\n            \"value\": \"AF (+93)\"\n          },\n          {\n            \"label\": \"Åland Islands (+358)\",\n            \"value\": \"AX (+358)\"\n          },\n          {\n            \"label\": \"Albania (+355)\",\n            \"value\": \"AL (+355)\"\n          },\n          {\n            \"label\": \"Algeria (+213)\",\n            \"value\": \"DZ (+213)\"\n          },\n          {\n            \"label\": \"American Samoa (+1)\",\n            \"value\": \"AS (+1)\"\n          },\n          {\n            \"label\": \"Andorra (+376)\",\n            \"value\": \"AD (+376)\"\n          },\n          {\n            \"label\": \"Angola (+244)\",\n            \"value\": \"AO (+244)\"\n          },\n          {\n            \"label\": \"Anguilla (+1)\",\n            \"value\": \"AI (+1)\"\n          },\n          {\n            \"label\": \"Antigua and Barbuda (+1)\",\n            \"value\": \"AG (+1)\"\n          },\n          {\n            \"label\": \"Argentina (+54)\",\n            \"value\": \"AR (+54)\"\n          },\n          {\n            \"label\": \"Armenia (+374)\",\n            \"value\": \"AM (+374)\"\n          },\n          {\n            \"label\": \"Aruba (+297)\",\n            \"value\": \"AW (+297)\"\n          },\n          {\n            \"label\": \"Australia (+61)\",\n            \"value\": \"AU (+61)\"\n          },\n          {\n            \"label\": \"Austria (+43)\",\n            \"value\": \"AT (+43)\"\n          },\n          {\n            \"label\": \"Azerbaijan (+994)\",\n            \"value\": \"AZ (+994)\"\n          },\n          {\n            \"label\": \"Bahamas (+1)\",\n            \"value\": \"BS (+1)\"\n          },\n          {\n            \"label\": \"Bahrain (+973)\",\n            \"value\": \"BH (+973)\"\n          },\n          {\n            \"label\": \"Bangladesh (+880)\",\n            \"value\": \"BD (+880)\"\n          },\n          {\n            \"label\": \"Barbados (+1)\",\n            \"value\": \"BB (+1)\"\n          },\n          {\n            \"label\": \"Belarus (+375)\",\n            \"value\": \"BY (+375)\"\n          },\n          {\n            \"label\": \"Belgium (+32)\",\n            \"value\": \"BE (+32)\"\n          },\n          {\n            \"label\": \"Belize (+501)\",\n            \"value\": \"BZ (+501)\"\n          },\n          {\n            \"label\": \"Benin (+229)\",\n            \"value\": \"BJ (+229)\"\n          },\n          {\n            \"label\": \"Bermuda (+1)\",\n            \"value\": \"BM (+1)\"\n          },\n          {\n            \"label\": \"Bhutan (+975)\",\n            \"value\": \"BT (+975)\"\n          },\n          {\n            \"label\": \"Bosnia and Herzegovina (+387)\",\n            \"value\": \"BA (+387)\"\n          },\n          {\n            \"label\": \"Botswana (+267)\",\n            \"value\": \"BW (+267)\"\n          },\n          {\n            \"label\": \"Brazil (+55)\",\n            \"value\": \"BR (+55)\"\n          },\n          {\n            \"label\": \"British Indian Ocean Territory (+246)\",\n            \"value\": \"IO (+246)\"\n          },\n          {\n            \"label\": \"Bulgaria (+359)\",\n            \"value\": \"BG (+359)\"\n          },\n          {\n            \"label\": \"Burkina Faso (+226)\",\n            \"value\": \"BF (+226)\"\n          },\n          {\n            \"label\": \"Burundi (+257)\",\n            \"value\": \"BI (+257)\"\n          },\n          {\n            \"label\": \"Cambodia (+855)\",\n            \"value\": \"KH (+855)\"\n          },\n          {\n            \"label\": \"Cameroon (+237)\",\n            \"value\": \"CM (+237)\"\n          },\n          {\n            \"label\": \"Canada (+1)\",\n            \"value\": \"CA (+1)\"\n          },\n          {\n            \"label\": \"Cayman Islands (+1)\",\n            \"value\": \"KY (+1)\"\n          },\n          {\n            \"label\": \"Central African Republic (+236)\",\n            \"value\": \"CF (+236)\"\n          },\n          {\n            \"label\": \"Chad (+235)\",\n            \"value\": \"TD (+235)\"\n          },\n          {\n            \"label\": \"Chile (+56)\",\n            \"value\": \"CL (+56)\"\n          },\n          {\n            \"label\": \"China (+86)\",\n            \"value\": \"CN (+86)\"\n          },\n          {\n            \"label\": \"Christmas Island (+61)\",\n            \"value\": \"CX (+61)\"\n          },\n          {\n            \"label\": \"Cocos (Keeling) Islands (+61)\",\n            \"value\": \"CC (+61)\"\n          },\n          {\n            \"label\": \"Colombia (+57)\",\n            \"value\": \"CO (+57)\"\n          },\n          {\n            \"label\": \"Comoros (+269)\",\n            \"value\": \"KM (+269)\"\n          },\n          {\n            \"label\": \"Congo (+242)\",\n            \"value\": \"CG (+242)\"\n          },\n          {\n            \"label\": \"Cook Islands (+682)\",\n            \"value\": \"CK (+682)\"\n          },\n          {\n            \"label\": \"Costa Rica (+506)\",\n            \"value\": \"CR (+506)\"\n          },\n          {\n            \"label\": \"Croatia (+385)\",\n            \"value\": \"HR (+385)\"\n          },\n          {\n            \"label\": \"Cuba (+53)\",\n            \"value\": \"CU (+53)\"\n          },\n          {\n            \"label\": \"Cyprus (+357)\",\n            \"value\": \"CY (+357)\"\n          },\n          {\n            \"label\": \"Czech Republic (+420)\",\n            \"value\": \"CZ (+420)\"\n          },\n          {\n            \"label\": \"Denmark (+45)\",\n            \"value\": \"DK (+45)\"\n          },\n          {\n            \"label\": \"Djibouti (+253)\",\n            \"value\": \"DJ (+253)\"\n          },\n          {\n            \"label\": \"Dominica (+1)\",\n            \"value\": \"DM (+1)\"\n          },\n          {\n            \"label\": \"Dominican Republic (+1)\",\n            \"value\": \"DO (+1)\"\n          },\n          {\n            \"label\": \"Ecuador (+593)\",\n            \"value\": \"EC (+593)\"\n          },\n          {\n            \"label\": \"Egypt (+20)\",\n            \"value\": \"EG (+20)\"\n          },\n          {\n            \"label\": \"El Salvador (+503)\",\n            \"value\": \"SV (+503)\"\n          },\n          {\n            \"label\": \"Equatorial Guinea (+240)\",\n            \"value\": \"GQ (+240)\"\n          },\n          {\n            \"label\": \"Eritrea (+291)\",\n            \"value\": \"ER (+291)\"\n          },\n          {\n            \"label\": \"Estonia (+372)\",\n            \"value\": \"EE (+372)\"\n          },\n          {\n            \"label\": \"Ethiopia (+251)\",\n            \"value\": \"ET (+251)\"\n          },\n          {\n            \"label\": \"Faroe Islands (+298)\",\n            \"value\": \"FO (+298)\"\n          },\n          {\n            \"label\": \"Fiji (+679)\",\n            \"value\": \"FJ (+679)\"\n          },\n          {\n            \"label\": \"Finland (+358)\",\n            \"value\": \"FI (+358)\"\n          },\n          {\n            \"label\": \"France (+33)\",\n            \"value\": \"FR (+33)\"\n          },\n          {\n            \"label\": \"French Guiana (+594)\",\n            \"value\": \"GF (+594)\"\n          },\n          {\n            \"label\": \"French Polynesia (+689)\",\n            \"value\": \"PF (+689)\"\n          },\n          {\n            \"label\": \"Gabon (+241)\",\n            \"value\": \"GA (+241)\"\n          },\n          {\n            \"label\": \"Gambia (+220)\",\n            \"value\": \"GM (+220)\"\n          },\n          {\n            \"label\": \"Georgia (+995)\",\n            \"value\": \"GE (+995)\"\n          },\n          {\n            \"label\": \"Germany (+49)\",\n            \"value\": \"DE (+49)\"\n          },\n          {\n            \"label\": \"Ghana (+233)\",\n            \"value\": \"GH (+233)\"\n          },\n          {\n            \"label\": \"Gibraltar (+350)\",\n            \"value\": \"GI (+350)\"\n          },\n          {\n            \"label\": \"Greece (+30)\",\n            \"value\": \"GR (+30)\"\n          },\n          {\n            \"label\": \"Greenland (+299)\",\n            \"value\": \"GL (+299)\"\n          },\n          {\n            \"label\": \"Grenada (+1)\",\n            \"value\": \"GD (+1)\"\n          },\n          {\n            \"label\": \"Guadeloupe (+590)\",\n            \"value\": \"GP (+590)\"\n          },\n          {\n            \"label\": \"Guam (+1)\",\n            \"value\": \"GU (+1)\"\n          },\n          {\n            \"label\": \"Guatemala (+502)\",\n            \"value\": \"GT (+502)\"\n          },\n          {\n            \"label\": \"Guernsey (+44)\",\n            \"value\": \"GG (+44)\"\n          },\n          {\n            \"label\": \"Guinea (+224)\",\n            \"value\": \"GN (+224)\"\n          },\n          {\n            \"label\": \"Guinea-Bissau (+245)\",\n            \"value\": \"GW (+245)\"\n          },\n          {\n            \"label\": \"Guyana (+592)\",\n            \"value\": \"GY (+592)\"\n          },\n          {\n            \"label\": \"Haiti (+509)\",\n            \"value\": \"HT (+509)\"\n          },\n          {\n            \"label\": \"Holy See (Vatican City State) (+39)\",\n            \"value\": \"VA (+39)\"\n          },\n          {\n            \"label\": \"Honduras (+504)\",\n            \"value\": \"HN (+504)\"\n          },\n          {\n            \"label\": \"Hong Kong (+852)\",\n            \"value\": \"HK (+852)\"\n          },\n          {\n            \"label\": \"Hungary (+36)\",\n            \"value\": \"HU (+36)\"\n          },\n          {\n            \"label\": \"Iceland (+354)\",\n            \"value\": \"IS (+354)\"\n          },\n          {\n            \"label\": \"India (+91)\",\n            \"value\": \"IN (+91)\"\n          },\n          {\n            \"label\": \"Indonesia (+62)\",\n            \"value\": \"ID (+62)\"\n          },\n          {\n            \"label\": \"Iraq (+964)\",\n            \"value\": \"IQ (+964)\"\n          },\n          {\n            \"label\": \"Ireland (+353)\",\n            \"value\": \"IE (+353)\"\n          },\n          {\n            \"label\": \"Isle of Man (+44)\",\n            \"value\": \"IM (+44)\"\n          },\n          {\n            \"label\": \"Israel (+972)\",\n            \"value\": \"IL (+972)\"\n          },\n          {\n            \"label\": \"Italy (+39)\",\n            \"value\": \"IT (+39)\"\n          },\n          {\n            \"label\": \"Jamaica (+1)\",\n            \"value\": \"JM (+1)\"\n          },\n          {\n            \"label\": \"Japan (+81)\",\n            \"value\": \"JP (+81)\"\n          },\n          {\n            \"label\": \"Jersey (+44)\",\n            \"value\": \"JE (+44)\"\n          },\n          {\n            \"label\": \"Jordan (+962)\",\n            \"value\": \"JO (+962)\"\n          },\n          {\n            \"label\": \"Kazakhstan (+7)\",\n            \"value\": \"KZ (+7)\"\n          },\n          {\n            \"label\": \"Kenya (+254)\",\n            \"value\": \"KE (+254)\"\n          },\n          {\n            \"label\": \"Kiribati (+686)\",\n            \"value\": \"KI (+686)\"\n          },\n          {\n            \"label\": \"Kosovo (+383)\",\n            \"value\": \"XK (+383)\"\n          },\n          {\n            \"label\": \"Kosovo (+377)\",\n            \"value\": \"XK (+377)\"\n          },\n          {\n            \"label\": \"Kosovo (+381)\",\n            \"value\": \"XK (+381)\"\n          },\n          {\n            \"label\": \"Kosovo (+386)\",\n            \"value\": \"XK (+386)\"\n          },\n          {\n            \"label\": \"Kuwait (+965)\",\n            \"value\": \"KW (+965)\"\n          },\n          {\n            \"label\": \"Kyrgyzstan (+996)\",\n            \"value\": \"KG (+996)\"\n          },\n          {\n            \"label\": \"Laos (+856)\",\n            \"value\": \"LA (+856)\"\n          },\n          {\n            \"label\": \"Latvia (+371)\",\n            \"value\": \"LV (+371)\"\n          },\n          {\n            \"label\": \"Lebanon (+961)\",\n            \"value\": \"LB (+961)\"\n          },\n          {\n            \"label\": \"Lesotho (+266)\",\n            \"value\": \"LS (+266)\"\n          },\n          {\n            \"label\": \"Liberia (+231)\",\n            \"value\": \"LR (+231)\"\n          },\n          {\n            \"label\": \"Liechtenstein (+423)\",\n            \"value\": \"LI (+423)\"\n          },\n          {\n            \"label\": \"Lithuania (+370)\",\n            \"value\": \"LT (+370)\"\n          },\n          {\n            \"label\": \"Luxembourg (+352)\",\n            \"value\": \"LU (+352)\"\n          },\n          {\n            \"label\": \"Macao (+853)\",\n            \"value\": \"MO (+853)\"\n          },\n          {\n            \"label\": \"Madagascar (+261)\",\n            \"value\": \"MG (+261)\"\n          },\n          {\n            \"label\": \"Malawi (+265)\",\n            \"value\": \"MW (+265)\"\n          },\n          {\n            \"label\": \"Malaysia (+60)\",\n            \"value\": \"MY (+60)\"\n          },\n          {\n            \"label\": \"Maldives (+960)\",\n            \"value\": \"MV (+960)\"\n          },\n          {\n            \"label\": \"Mali (+223)\",\n            \"value\": \"ML (+223)\"\n          },\n          {\n            \"label\": \"Malta (+356)\",\n            \"value\": \"MT (+356)\"\n          },\n          {\n            \"label\": \"Marshall Islands (+692)\",\n            \"value\": \"MH (+692)\"\n          },\n          {\n            \"label\": \"Martinique (+596)\",\n            \"value\": \"MQ (+596)\"\n          },\n          {\n            \"label\": \"Mauritania (+222)\",\n            \"value\": \"MR (+222)\"\n          },\n          {\n            \"label\": \"Mauritius (+230)\",\n            \"value\": \"MU (+230)\"\n          },\n          {\n            \"label\": \"Mayotte (+262)\",\n            \"value\": \"YT (+262)\"\n          },\n          {\n            \"label\": \"Mexico (+52)\",\n            \"value\": \"MX (+52)\"\n          },\n          {\n            \"label\": \"Moldova (+373)\",\n            \"value\": \"MD (+373)\"\n          },\n          {\n            \"label\": \"Monaco (+377)\",\n            \"value\": \"MC (+377)\"\n          },\n          {\n            \"label\": \"Mongolia (+976)\",\n            \"value\": \"MN (+976)\"\n          },\n          {\n            \"label\": \"Montenegro (+382)\",\n            \"value\": \"ME (+382)\"\n          },\n          {\n            \"label\": \"Montserrat (+1)\",\n            \"value\": \"MS (+1)\"\n          },\n          {\n            \"label\": \"Morocco (+212)\",\n            \"value\": \"MA (+212)\"\n          },\n          {\n            \"label\": \"Mozambique (+258)\",\n            \"value\": \"MZ (+258)\"\n          },\n          {\n            \"label\": \"Myanmar (+95)\",\n            \"value\": \"MM (+95)\"\n          },\n          {\n            \"label\": \"Namibia (+264)\",\n            \"value\": \"NA (+264)\"\n          },\n          {\n            \"label\": \"Nauru (+674)\",\n            \"value\": \"NR (+674)\"\n          },\n          {\n            \"label\": \"Nepal (+977)\",\n            \"value\": \"NP (+977)\"\n          },\n          {\n            \"label\": \"Netherlands (+31)\",\n            \"value\": \"NL (+31)\"\n          },\n          {\n            \"label\": \"New Caledonia (+687)\",\n            \"value\": \"NC (+687)\"\n          },\n          {\n            \"label\": \"New Zealand (+64)\",\n            \"value\": \"NZ (+64)\"\n          },\n          {\n            \"label\": \"Nicaragua (+505)\",\n            \"value\": \"NI (+505)\"\n          },\n          {\n            \"label\": \"Niger (+227)\",\n            \"value\": \"NE (+227)\"\n          },\n          {\n            \"label\": \"Nigeria (+234)\",\n            \"value\": \"NG (+234)\"\n          },\n          {\n            \"label\": \"Niue (+683)\",\n            \"value\": \"NU (+683)\"\n          },\n          {\n            \"label\": \"Norfolk Island (+672)\",\n            \"value\": \"NF (+672)\"\n          },\n          {\n            \"label\": \"Northern Mariana Islands (+1)\",\n            \"value\": \"MP (+1)\"\n          },\n          {\n            \"label\": \"Norway (+47)\",\n            \"value\": \"NO (+47)\"\n          },\n          {\n            \"label\": \"Oman (+968)\",\n            \"value\": \"OM (+968)\"\n          },\n          {\n            \"label\": \"Pakistan (+92)\",\n            \"value\": \"PK (+92)\"\n          },\n          {\n            \"label\": \"Palau (+680)\",\n            \"value\": \"PW (+680)\"\n          },\n          {\n            \"label\": \"Panama (+507)\",\n            \"value\": \"PA (+507)\"\n          },\n          {\n            \"label\": \"Papua New Guinea (+675)\",\n            \"value\": \"PG (+675)\"\n          },\n          {\n            \"label\": \"Paraguay (+595)\",\n            \"value\": \"PY (+595)\"\n          },\n          {\n            \"label\": \"Peru (+51)\",\n            \"value\": \"PE (+51)\"\n          },\n          {\n            \"label\": \"Philippines (+63)\",\n            \"value\": \"PH (+63)\"\n          },\n          {\n            \"label\": \"Poland (+48)\",\n            \"value\": \"PL (+48)\"\n          },\n          {\n            \"label\": \"Portugal (+351)\",\n            \"value\": \"PT (+351)\"\n          },\n          {\n            \"label\": \"Puerto Rico (+1)\",\n            \"value\": \"PR (+1)\"\n          },\n          {\n            \"label\": \"Qatar (+974)\",\n            \"value\": \"QA (+974)\"\n          },\n          {\n            \"label\": \"Reunion (+262)\",\n            \"value\": \"RE (+262)\"\n          },\n          {\n            \"label\": \"Romania (+40)\",\n            \"value\": \"RO (+40)\"\n          },\n          {\n            \"label\": \"Rwanda (+250)\",\n            \"value\": \"RW (+250)\"\n          },\n          {\n            \"label\": \"Saint Barthelemy (+590)\",\n            \"value\": \"BL (+590)\"\n          },\n          {\n            \"label\": \"Saint Kitts and Nevis (+869)\",\n            \"value\": \"KN (+869)\"\n          },\n          {\n            \"label\": \"Saint Lucia (+1)\",\n            \"value\": \"LC (+1)\"\n          },\n          {\n            \"label\": \"Saint Martin (+590)\",\n            \"value\": \"MF (+590)\"\n          },\n          {\n            \"label\": \"Saint Pierre and Miquelon (+508)\",\n            \"value\": \"PM (+508)\"\n          },\n          {\n            \"label\": \"Saint Vincent and the Grenadines (+1)\",\n            \"value\": \"VC (+1)\"\n          },\n          {\n            \"label\": \"Samoa (+685)\",\n            \"value\": \"WS (+685)\"\n          },\n          {\n            \"label\": \"San Marino (+378)\",\n            \"value\": \"SM (+378)\"\n          },\n          {\n            \"label\": \"Sao Tome and Principe (+239)\",\n            \"value\": \"ST (+239)\"\n          },\n          {\n            \"label\": \"Saudi Arabia (+966)\",\n            \"value\": \"SA (+966)\"\n          },\n          {\n            \"label\": \"Senegal (+221)\",\n            \"value\": \"SN (+221)\"\n          },\n          {\n            \"label\": \"Serbia (+381)\",\n            \"value\": \"RS (+381)\"\n          },\n          {\n            \"label\": \"Seychelles (+248)\",\n            \"value\": \"SC (+248)\"\n          },\n          {\n            \"label\": \"Sierra Leone (+232)\",\n            \"value\": \"SL (+232)\"\n          },\n          {\n            \"label\": \"Singapore (+65)\",\n            \"value\": \"SG (+65)\"\n          },\n          {\n            \"label\": \"Slovakia (+421)\",\n            \"value\": \"SK (+421)\"\n          },\n          {\n            \"label\": \"Slovenia (+386)\",\n            \"value\": \"SI (+386)\"\n          },\n          {\n            \"label\": \"Solomon Islands (+677)\",\n            \"value\": \"SB (+677)\"\n          },\n          {\n            \"label\": \"Somalia (+252)\",\n            \"value\": \"SO (+252)\"\n          },\n          {\n            \"label\": \"South Africa (+27)\",\n            \"value\": \"ZA (+27)\"\n          },\n          {\n            \"label\": \"South Sudan (+211)\",\n            \"value\": \"SS (+211)\"\n          },\n          {\n            \"label\": \"Spain (+34)\",\n            \"value\": \"ES (+34)\"\n          },\n          {\n            \"label\": \"Sri Lanka (+94)\",\n            \"value\": \"LK (+94)\"\n          },\n          {\n            \"label\": \"Sudan (+249)\",\n            \"value\": \"SD (+249)\"\n          },\n          {\n            \"label\": \"Suri (+597)\",\n            \"value\": \"SR (+597)\"\n          },\n          {\n            \"label\": \"Svalbard and Jan Mayen (+47)\",\n            \"value\": \"SJ (+47)\"\n          },\n          {\n            \"label\": \"Swaziland (+268)\",\n            \"value\": \"SZ (+268)\"\n          },\n          {\n            \"label\": \"Sweden (+46)\",\n            \"value\": \"SE (+46)\"\n          },\n          {\n            \"label\": \"Switzerland (+41)\",\n            \"value\": \"CH (+41)\"\n          },\n          {\n            \"label\": \"Taiwan (+886)\",\n            \"value\": \"TW (+886)\"\n          },\n          {\n            \"label\": \"Tajikistan (+992)\",\n            \"value\": \"TJ (+992)\"\n          },\n          {\n            \"label\": \"Thailand (+66)\",\n            \"value\": \"TH (+66)\"\n          },\n          {\n            \"label\": \"Timor-Leste (+670)\",\n            \"value\": \"TL (+670)\"\n          },\n          {\n            \"label\": \"Togo (+228)\",\n            \"value\": \"TG (+228)\"\n          },\n          {\n            \"label\": \"Tokelau (+690)\",\n            \"value\": \"TK (+690)\"\n          },\n          {\n            \"label\": \"Tonga (+676)\",\n            \"value\": \"TO (+676)\"\n          },\n          {\n            \"label\": \"Trinidad and Tobago (+1)\",\n            \"value\": \"TT (+1)\"\n          },\n          {\n            \"label\": \"Tunisia (+216)\",\n            \"value\": \"TN (+216)\"\n          },\n          {\n            \"label\": \"Turkey (+90)\",\n            \"value\": \"TR (+90)\"\n          },\n          {\n            \"label\": \"Turkmenistan (+993)\",\n            \"value\": \"TM (+993)\"\n          },\n          {\n            \"label\": \"Turks and Caicos Islands (+1)\",\n            \"value\": \"TC (+1)\"\n          },\n          {\n            \"label\": \"Tuvalu (+688)\",\n            \"value\": \"TV (+688)\"\n          },\n          {\n            \"label\": \"Uganda (+256)\",\n            \"value\": \"UG (+256)\"\n          },\n          {\n            \"label\": \"Ukraine (+380)\",\n            \"value\": \"UA (+380)\"\n          },\n          {\n            \"label\": \"United Arab Emirates (+971)\",\n            \"value\": \"AE (+971)\"\n          },\n          {\n            \"label\": \"United Kingdom (+44)\",\n            \"value\": \"GB (+44)\"\n          },\n          {\n            \"label\": \"Uruguay (+598)\",\n            \"value\": \"UY (+598)\"\n          },\n          {\n            \"label\": \"Uzbekistan (+998)\",\n            \"value\": \"UZ (+998)\"\n          },\n          {\n            \"label\": \"Vanuatu (+678)\",\n            \"value\": \"VU (+678)\"\n          },\n          {\n            \"label\": \"Vietnam (+84)\",\n            \"value\": \"VN (+84)\"\n          },\n          {\n            \"label\": \"Wallis and Futuna (+681)\",\n            \"value\": \"WF (+681)\"\n          },\n          {\n            \"label\": \"Yemen (+967)\",\n            \"value\": \"YE (+967)\"\n          },\n          {\n            \"label\": \"Zambia (+260)\",\n            \"value\": \"ZM (+260)\"\n          },\n          {\n            \"label\": \"Zimbabwe (+263)\",\n            \"value\": \"ZW (+263)\"\n          },\n          {\n            \"label\": \"United States of America (+1)\",\n            \"value\": \"US (+1)\"\n          }\n        ]\n     } :\n     $fieldName = \"ln_url\" ? {\n       \"id\": \"ln_url\",\n       \"label\": \"LinkedIn URL\",\n       \"field\": \"additionalFields.ln_url\",\n       \"inputType\": \"TEXT\"\n     } :\n     $fieldName = \"message\" ? {\n       \"id\": \"message\",\n       \"label\": \"Message\",\n       \"field\": \"additionalFields.message\",\n       \"inputType\": \"TEXT\"\n     } :\n     $fieldName = \"cv\" ? {\n       \"id\": \"cv\",\n       \"label\": \"CV\",\n       \"field\": \"resumeUrl\",\n       \"inputType\": \"RESUME\"\n     } :\n     $fieldName = \"cover_letter\" ? {\n       \"id\": \"cover_letter\",\n       \"label\": \"Cover Letter\",\n       \"field\": \"additionalFiles.cover_letter\",\n       \"inputType\": \"FILE_UPLOAD\"\n     } :\n     $fieldName = \"other_1\" ? {\n       \"id\": \"other_1\",\n       \"label\": \"Other 1\",\n       \"field\": \"additionalFiles.other_1\",\n       \"inputType\": \"FILE_UPLOAD\"\n     } : {\n       \"id\": $fieldName,\n       \"label\": $fieldName,\n       \"field\": $fieldName,\n       \"inputType\": \"TEXT\"\n     }\n   };\n   $standardQuestionObj := function($fieldName) {\n     (\n         $meta := $standardFieldMeta($fieldName);\n         {\n             \"type\": \"QUESTION\",\n             \"id\": $meta.id,\n             \"label\": $meta.label,\n             \"field\": $meta.field,\n             \"inputType\": $meta.inputType,\n             \"isMultiValue\": false,\n             \"properties\": $merge([\n                 {\"isMandatory\": $isRequired($fieldName)},\n                 ($meta.inputType = \"RESUME\" or $meta.inputType = \"FILE_UPLOAD\") ? {\n                     \"mimeTypes\": [\"PDF\", \"DOC\", \"DOCX\"]\n                 } : {}\n             ]),\n             \"inputOptionList\": $append($meta.inputOptionList, []),\n             \"inputValidation\": null,\n             \"dependencyCriteria\": null\n         }\n     )\n   };\n   $questionObj := function($jobylonQuestion) {\n     {\n       \"type\": \"QUESTION\",\n       \"id\": $string($jobylonQuestion.id),\n       \"label\": $jobylonQuestion.label,\n       \"field\": ($jobylonQuestion.choice_type = \"file\" ? \"additionalFiles.question_\" & $string($jobylonQuestion.id):\n                \"additionalFields.question_\" & $string($jobylonQuestion.id)),\n       \"inputType\": $inputType($jobylonQuestion.choice_type),\n       \"isMultiValue\": $isMultiValue($jobylonQuestion.choice_type),\n       \"properties\": $merge([\n         {\"isMandatory\": $isRequired(\"question_\" & $string($jobylonQuestion.id))},\n         ($jobylonQuestion.choice_type = \"file\") ? {\n                     \"mimeTypes\": [\"PDF\", \"DOC\", \"DOCX\"]\n                 } : {}\n       ]),\n       \"inputOptionList\": $inputOptionListObj($jobylonQuestion.choices),\n       \"inputValidation\": $inputValidationObj($jobylonQuestion.choice_type, $jobylonQuestion.choices),\n       \"dependencyCriteria\": null\n     }\n   };\n   $standardFields := $filter($allFormFields, function($fieldName) {\n     $substring($fieldName, 0, 9) != \"question_\" and $not($isHidden($fieldName))\n   });\n   $visibleCustomQuestions := $filter($results, function($question) {\n     $not($isHidden(\"question_\" & $string($question.id)))\n   });\n   $ucpQuestionsArray := $count($standardFields) > 0 ? $map($standardFields, function($fieldName) {\n     $standardQuestionObj($fieldName)\n   }) : [];\n   $additionalQuestionsArray := $count($visibleCustomQuestions) > 0 ? $map($visibleCustomQuestions, function($question) {\n     $questionObj($question)\n   }) : [];\n   {\n     \"data\": {\n       \"questions\": {\n         \"ucpQuestions\": $ucpQuestionsArray,\n         \"additionalQuestions\": [$additionalQuestionsArray],\n         \"surveyQuestions\": [],\n         \"consentQuestions\": []\n       }\n     },\n     \"errors\": null\n   }\n )"
+            }
+          ],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "Jobylon-application-webhook",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.status.id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(application.status.name)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "action = \"created\""
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n    \"atsJobId\": application.job.id,\n    \"atsCandidateId\": application.id,\n    \"atsApplicationId\": application.id,\n    \"status\": application.status.name,\n    \"source\": application.source_type,\n    \"createdDate\": $now(),\n    \"lastUpdatedDate\": $now(),\n    \"insertedAt\":$now(),\n    \"updatedAt\":$now()\n}    ",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB_QUESTION",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobylon-get-job-questions-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "/feeds/${feedHash}/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParams": {
+            "format": "json"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(inputData.atsJobId)"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            }
+          ],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobylon-get-job-questions",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "jobylon-get-job-questions-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "/feeds/${feedHash}/${jobId}/meta/questions/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParams": {
+            "format": "json"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobylon-get-job-form-fields",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "jobylon-get-job-questions-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "/feeds/${feedHash}/${jobId}/meta/form-fields/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParams": {
+            "format": "json"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobylon-create-application-dummy",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "p1/applications/",
+          "headers": {
+            "X-App-Key": "${appKey}",
+            "X-App-Id": "${appId}",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": null,
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobylon-application-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.application.atsJobId) and inputData.application.atsJobId != null) and ($exists(inputData.candidate.email) and inputData.candidate.email != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Jobylon-create-application-dummy",
+            "dependencyFields": [],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "p1/applications/",
+          "headers": {
+            "X-App-Key": "${appKey}",
+            "X-App-Id": "${appId}",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "( \n  $additionalFields := inputData.application.customFields.questionAnswers.additionalFields; \n  $additionalFiles := inputData.application.customFields.questionAnswers.additionalFiles; \n \n  $fieldQuestionKeys := $filter($keys($additionalFields), function($key) { \n    $substring($key, 0, 9) = \"question_\" \n  }); \n  $fieldAnswers := $count($fieldQuestionKeys) > 0 ? $map($fieldQuestionKeys, function($key) { \n    ( \n      $id := $number($replace($key, \"question_\", \"\")); \n      $value := $lookup($additionalFields, $key); \n      $textArray := $type($value) = \"array\" ? $value : [$value]; \n      { \n        \"question_id\": $id, \n        \"text\": $textArray \n      } \n    ) \n  }) : []; \n \n  $fileQuestionKeys := $filter($keys($additionalFiles), function($key) { \n    $substring($key, 0, 9) = \"question_\" \n  }); \n  $fileAnswers := $count($fileQuestionKeys) > 0 ? $map($fileQuestionKeys, function($key) { \n    ( \n      $val := $lookup($additionalFiles, $key); \n      $val != null and $val != \"\" ? ( \n        $id := $number($replace($key, \"question_\", \"\")); \n        $textArray := $type($val) = \"array\" ? $val : [$val]; \n        { \n          \"question_id\": $id, \n          \"text\": $textArray \n        } \n      ) \n    ) \n  }) : []; \n \n  $allAnswers := $append($fieldAnswers, $fileAnswers); \n \n  $nonQuestionFileKeys := $filter($keys($additionalFiles), function($key) { \n    $substring($key, 0, 9) != \"question_\" \n  }); \n  $filesObj := $count($nonQuestionFileKeys) > 0 ? $merge($map($nonQuestionFileKeys, function($key) { \n    ( \n      $val := $lookup($additionalFiles, $key); \n      $val != null and $val != \"\" ? { $key & \"_url\": $val } \n    ) \n  })) : {}; \n \n  $cvUrl := inputData.application.attachment.attachmentLocalPath; \n \n  $base := { \n    \"job_id\": inputData.application.atsJobId, \n    \"first_name\": inputData.candidate.firstName, \n    \"last_name\": inputData.candidate.lastName, \n    \"email\": inputData.candidate.email, \n    \"phone_number\": inputData.candidate.phoneNumbers[0].phoneNumber, \n    \"message\": inputData.application.customFields.questionAnswers.additionalFields.message, \n    \"source_type\": \"applied\", \n    \"source_json\": { \n      \"partner_name\": inputData.application.source \n    }, \n    \"answers\": $allAnswers \n  }; \n \n  $cvObj := $cvUrl != null and $cvUrl != \"\" ? { \"cv_url\": $cvUrl } : {}; \n \n  $merge([$base, $cvObj, $filesObj]) \n)",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($)}"
+            },
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id, \"applicationId\": id }"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobylon-get-jobs",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($job) { { \"atsJobId\": $string($job.id), \"refNumber\": $string($job.id), \"title\": $job.title, \"description\": $job.descr, \"url\": $job.urls.ad, \"status\": \"OPEN\", \"company\": $job.company.name, \"locations\": [$job.locations[location.city and location.country].{ \"city\": location.city, \"country\": location.country }], \"createdDate\": $job.dt_created, \"lastUpdatedDate\": $job.dt_modified, \"startDate\": $job.from_date ? ($job.from_date & \"T00:00:00Z\") : null, \"endDate\": $job.to_date ? ($job.to_date & \"T00:00:00Z\") : null, \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": { \"employment_type\": $job.employment_type, \"skills\": $job.skills, \"salary\": $job.salary, \"language\": $job.language, \"application_date_is_hidden\": $job.application_date_is_hidden, \"owner_email\": $job.owner.email, \"contact_email\": $job.contact.email }, \"positionLevel\": $job.experience, \"remoteType\": $job.workspace_type } })]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_AUDIT",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "/feeds/${feedHash}/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParams": {
+            "format": "json"
+          },
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

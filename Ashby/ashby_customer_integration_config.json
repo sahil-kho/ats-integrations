@@ -1,0 +1,22 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://api.ashbyhq.com",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "BasicAuthInfo",
+      "authContext": "API_HEADER",
+      "encodedToken": "********",
+      "staticHeaders": {},
+      "expiresInMillis": 0,
+      "customerOauthValues": {}
+    },
+    "customerAuthType": "BASIC",
+    "lastDataSyncTime": "2026-03-17T17:30:00.870050612",
+    "nextDataSyncTime": "2026-03-18T15:40:23.49690227",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": null,
+    "dataSyncFrequencyInMinutes": 0
+  }

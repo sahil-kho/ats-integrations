@@ -1,0 +1,44 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://rest91.bullhornstaffing.com/rest-services/bdyvi9",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "RefreshTokenOAuth2Info",
+      "expires": true,
+      "authContext": "API_HEADER",
+      "clientIdKey": null,
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://auth-west9.bullhornstaffing.com/oauth/token",
+        "tokenJsonataExpression": "access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "access_token",
+      "grantTypeValue": "refresh_token",
+      "expiresInMillis": 0,
+      "refreshTokenKey": null,
+      "additionalParams": {
+        "password": "Jb9g!yiriMBG0Z$y",
+        "username": "api.joveo",
+        "client_id": "d628e003-7630-4036-b58e-e1ffd35a95ea",
+        "client_secret": "K2UBRUu2AUl1IUAFxfYrZUHU"
+      },
+      "refreshTokenValue": "********",
+      "customerOauthValues": {},
+      "encodedClientSecretKey": null,
+      "refreshTokenJsonataExp": null,
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "BULLHORN_OAUTH2",
+    "lastDataSyncTime": null,
+    "nextDataSyncTime": null,
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": null,
+    "dataSyncFrequencyInMinutes": 0
+  }

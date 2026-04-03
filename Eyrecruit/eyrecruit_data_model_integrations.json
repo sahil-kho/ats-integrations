@@ -1,0 +1,61 @@
+[
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "eyerecruit-get-job-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.data.jobs",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($entities) {\r\n      {\r\n      \"atsJobId\": $entities.id,\r\n      \"refNumber\": $entities.id,\r\n      \"description\": $entities.description,\r\n      \"url\": $exists($entities.link) ? $entities.link : null,\r\n      \"title\": $entities.title,\r\n      \"status\": \"OPEN\",\r\n      \"remoteType\": $entities.job_type,\r\n      \"department\": $entities.categories,\r\n      \"company\": $entities.company,\r\n      \"locations\": [{\r\n          \"city\": $entities.city,\r\n           \"state\": $entities.county,\r\n            \"country\": $entities.country,\r\n            \"postalCode\": $entities.postcode,\r\n             \"isPrimary\": true\r\n      }],\r\n      \"insertedAt\": $now(),\r\n      \"updatedAt\": $now(),\r\n      \"createdDate\": $fromMillis($toMillis($replace($entities.published_at, \" \", \"T\") & \"Z\")),\r\n      \"customFields\":{\r\n        \"location\":$entities.location,\r\n        \"address\": $entities.address,\r\n          \"salary\":$entities.salary,\r\n          \"hours\":$entities.hours,\r\n          \"contract_type\":$entities.contract_type,\r\n          \"reference\":$entities.reference\r\n      }\r\n    }\r\n  }\r\n)]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/api/job/list",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

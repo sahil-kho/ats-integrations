@@ -1,0 +1,658 @@
+[
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobvite-candidate-application-create-start",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.jobvite.com/api/v2/candidate",
+          "headers": {
+            "x-jvi-sc": "${api-secret}",
+            "x-jvi-api": "${api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Skipped this integration because of dummy node\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobvite-candidate-application-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Jobvite-candidate-application-create-start",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "requestBody",
+                "jsonataExpression": "( $fun := function($value) { $value = null ? undefined : $value }; $string({ \"candidate\": { \"email\": $fun(inputData.candidate.email), \"firstName\": $fun(inputData.candidate.firstName), \"lastName\": $fun(inputData.candidate.lastName), \"mobile\": $fun(inputData.candidate.phone), \"sendEmail\": $fun(inputData.candidate.phone) , \"application\": { \"jobEId\": $fun(inputData.application.atsJobId), \"sourceType\": \"CareerSite\", \"source\": \"Joveo\", \"resume\": inputData.application.attachment.attachmentType = \"RESUME\" and inputData.application.attachment.attachmentContent != null and inputData.application.attachment.attachmentContentType = \"application/pdf\" and inputData.application.attachment.encodingType = \"BASE64\" ? { \"name\": $fun(inputData.application.attachment.attachmentFileName), \"contentByteArray\": $fun(inputData.application.attachment.attachmentContent), \"format\": \"ByteArray\" } : undefined }} }))",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.jobvite.com/api/v2/candidate",
+          "headers": {
+            "x-jvi-sc": "${api-secret}",
+            "x-jvi-api": "${api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "${requestBody}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is a dummy integration to support dependency fields for next integration.\"}"
+            },
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": application.candidate.EId, \"applicationId\": application.EId}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "jobvite-candidate-application-webhook-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(eventType)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(url)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(applicationId)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(oldValue)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(newValue)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(date)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "get-candidate-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": $string(candidates[0].application.job.eId), \"atsCandidateId\": \"${atsCandidateId}\", \"atsApplicationId\": \"${applicationId}\", \"stageId\": \"${stageId}\", \"stageName\": \"${stageId}\", \"createdDate\": \"${eventDate}\", \"lastUpdatedDate\": \"${eventDate}\", \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": {\"email\": $string(candidates[0].email)} }",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "jobvite-candidate-application-webhook-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsCandidateId",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "applicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "newValue",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "eventDate",
+                "jsonataExpression": "$fromMillis(date)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.jobvite.com/api/v2/candidate?candidateId=${candidateId}&applicationId=${applicationId}",
+          "headers": {
+            "x-jvi-sc": "${api-secret}",
+            "x-jvi-api": "${api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Jobvite-candidate-application-create",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.jobvite.com/api/v2/candidates",
+          "headers": {
+            "x-jvi-sc": "${api-secret}",
+            "x-jvi-api": "${api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $candidateIdPost := Jobvite_candidate_application_create[0].candidateId; $applicationIdPost := Jobvite_candidate_application_create[0].applicationId; $customFields := function($keys) { $merge( $map($keys, function($key) { { $key: $lookup($, $key) } }) ) }; $exists($candidateIdPost) ? { \"data\": { \"candidateId\": $string($candidateIdPost), \"applicationId\": $string($applicationIdPost), \"customFields\": $customFields([ \"Jobvite_candidate_application_create\" ]) }, \"errors\": [] } : { \"data\": null, \"errors\": [ { \"errorCode\": null, \"errorType\": null, \"message\": $string($), \"params\": {} } ] } )"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "jobvite-job-webhook-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(eventType)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(url)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(date)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "get-job",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": requisitions[0].eId, \"refNumber\": requisitions[0].eId, \"title\": requisitions[0].title, \"description\": requisitions[0].description = null or requisitions[0].description = \"\" ? requisitions[0].title : requisitions[0].description, \"url\": requisitions[0].applyLink, \"locations\": $exists(requisitions[0].locations) ? requisitions[0].locations : [], \"department\": $exists(requisitions[0].department) ? requisitions[0].department : null, \"status\": requisitions[0].jobState = \"Open\"? \"OPEN\":   requisitions[0].jobState = \"Closed\"?   \"CLOSED\":   requisitions[0].jobState = \"Filled\"?   \"CLOSED\":   requisitions[0].jobState = \"On Hold\"?   \"OPEN\":   requisitions[0].jobState = \"Awaiting Approval\"?   \"DRAFTED\":   requisitions[0].jobState = \"Approved\"?   \"OPEN\":   requisitions[0].jobState = \"Rejected\"?   \"DELETED\":   requisitions[0].jobState = \"Retracted\"?   \"DELETED\":   requisitions[0].jobState = \"Draft\"?   \"DRAFTED\":   \"CLOSED\",   \"positionCategory\": requisitions[0].category, \"positionLevel\": $exists(requisitions[0].positionLevel) ? requisitions[0].positionLevel : null, \"remoteType\": $exists(requisitions[0].remoteType) ? requisitions[0].remoteType : null, \"company\": requisitions[0].companyId, \"recruiters\": $exists(requisitions[0].createdBy.firstName) ? [$string(requisitions[0].createdBy.firstName & \" \" & requisitions[0].createdBy.lastName)] : [], \"hiringManagers\": $exists(requisitions[0].hiringManagers) ? requisitions[0].hiringManagers : [], \"createdDate\": $exists(requisitions[0].sentDate) ? $fromMillis(requisitions[0].sentDate) : null, \"lastUpdatedDate\": $exists(requisitions[0].lastUpdatedDate) ? $fromMillis(requisitions[0].lastUpdatedDate) : null, \"startDate\": $exists(requisitions[0].startDate) ? $fromMillis(requisitions[0].startDate) : null, \"endDate\": $exists(requisitions[0].endDate) ? $fromMillis(requisitions[0].endDate) : null, \"insertedAt\": $now(), \"updatedAt\": $now() }",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "jobvite-job-webhook-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "id",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "BASIC"
+          ],
+          "apiPath": "https://api.jobvite.com/api/v2/job?ids=${jobId}",
+          "headers": {
+            "x-jvi-sc": "${api-secret}",
+            "x-jvi-api": "${api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobvite-rest-job-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.requisitions",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($entities) {\n  {\n    \"atsJobId\": $entities.eId,\n    \"refNumber\": $entities.eId,\n    \"url\": $exists($entities.applyLink) ? $entities.applyLink : null,\n    \"title\": $entities.title,\n    \"status\": $exists($entities.jobState)\n      ? ($entities.jobState = 'Open' ? \"OPEN\" : \"CLOSED\")\n      : \"DRAFTED\",\n    \"department\": $entities.category,\n    \"insertedAt\": $entities.lastUpdatedDate != null \n      ? $fromMillis($entities.lastUpdatedDate)\n      : null,\n    \"updatedAt\": $now(),\n    \"startDate\": $entities.sentDate != null \n      ? $fromMillis($entities.sentDate)\n      : null,\n    \"createdDate\": $entities.sentDate != null \n      ? $fromMillis($entities.sentDate) \n      : null,\n    \"customFields\": $entities\n  }\n})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_URL",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/job",
+          "headers": {
+            "x-jvi-sc": "b9f9df17efb1b1558ce80ea9b590d4aa",
+            "x-jvi-api": "joveo_partner_api_key",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "jobvite-candidate-get",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$.candidates",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.eId) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.firstName) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.lastName) }), function($acc, $v) { $acc and $v })"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$reduce($map($$, function($v) { $exists($v.email) }), function($acc, $v) { $acc and $v })"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($candidate){\r\n    {\r\n    \"atsCandidateId\": $candidate.eId,\r\n    \"firstName\": $exists($candidate.firstName) ? $candidate.firstName : \"\",\r\n    \"lastName\": $exists($candidate.lastName) ? $candidate.lastName : \"\",\r\n    \"email\": $candidate.email != null ? $candidate.email : \"\",\r\n    \"phoneNumbers\": [\r\n        {\"phoneNumber\": $exists($candidate.workPhone) and $candidate.workPhone!=\"\" ? $candidate.workPhone : null , \"isPrimary\": true, \"countryCode\": \"US\", \"customFields\": {\"type\":\"workPhone\"}},\r\n      {\"phoneNumber\": $exists($candidate.homePhone) and $candidate.homePhone!=\"\" ? $candidate.homePhone : null, \"isPrimary\": false, \"countryCode\": \"US\", \"customFields\": {\"type\":\"homePhone\"}} ,\r\n      {\"phoneNumber\": $exists($candidate.mobile) and $candidate.mobile!=\"\" ? $candidate.mobile : null, \"isPrimary\": false, \"countryCode\": \"US\", \"customFields\": {\"type\":\"mobile\"}}\r\n      \r\n    ],\r\n    \"canEmail\": true,\r\n    \"links\": [],\r\n    \"address\": {\r\n      \"country\": $exists($candidate.country) and $candidate.country!=\"\"  ? $candidate.country : null,\r\n      \"countryIsoCode\": $exists($candidate.countryCode) and $candidate.countryCode!=\"\" ? $candidate.countryCode : null,\r\n      \"state\": $exists($candidate.state) and $candidate.state!=\"\"? $candidate.state : null,\r\n      \"city\": $exists($candidate.city) and $candidate.city!=\"\"? $candidate.city : null,\r\n      \"postalCode\": $exists($candidate.postalCode) and $candidate.postalCode!=\"\"? $candidate.postalCode : null,\r\n      \"customFields\": null\r\n    },\r\n    \"workExperience\": [],\r\n    \"education\": [],\r\n    \"customFields\": {\r\n      \"smsConsent\": $exists($candidate.smsConsent) ? $candidate.smsConsent : false\r\n    },\r\n    \"insertedAt\": $now(),\r\n    \"updatedAt\": $now()\r\n  }\r\n  })]",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "/candidate",
+          "headers": {
+            "x-jvi-sc": "b9f9df17efb1b1558ce80ea9b590d4aa",
+            "x-jvi-api": "joveo_partner_api_key",
+            "Content-Type": "application/json"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDate",
+            "endDateTimeKey": "endDate",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(candidates)"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 401,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Authentication failed - invalid API key or secret\"}"
+            },
+            {
+              "statusCode": 403,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Access forbidden - insufficient permissions\"}"
+            },
+            {
+              "statusCode": 429,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Rate limit exceeded - too many requests\"}"
+            }
+          ],
+          "executionEligibilityRules": []
+        }
+      ]
+    }
+  ]

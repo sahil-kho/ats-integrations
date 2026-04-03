@@ -1,0 +1,35 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://api.avionte.com",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "OAuth2Info",
+      "authContext": "API_HEADER",
+      "clientIdKey": "client_id",
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://api.avionte.com/authorize/token",
+        "tokenJsonataExpression": "\"Bearer \" & access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "Authorization",
+      "grantTypeValue": "client_credentials",
+      "expiresInMillis": 0,
+      "additionalParams": {},
+      "customerOauthValues": {},
+      "encodedClientSecretKey": "client_secret",
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "OAUTH_2",
+    "lastDataSyncTime": "2026-03-31T08:31:52",
+    "nextDataSyncTime": "2026-03-31T10:30:13.573868012",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 1,
+    "dataSyncFrequencyInMinutes": 0
+  }

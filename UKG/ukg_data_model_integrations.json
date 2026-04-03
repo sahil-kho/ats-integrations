@@ -1,0 +1,1120 @@
+[
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-job-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($)>0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$,function($opportunity){\n    {\n        \"title\": $opportunity.title.en_us,\n        \"atsJobId\": $opportunity.id,\n        \"refNumber\": $opportunity.requisition_number,\n        \"url\": $count($opportunity.job_boards)>0?$opportunity.job_boards[0].recruiting_apply_url:\"https://recruiting2.ultipro.com/ASH1002AF/JobBoard/20c06009-60fe-480c-8ce5-da3e9df145b9?q=&o=postedDateDesc\",\n        \"description\": $opportunity.description.detailed.external.en_us,\n        \"department\":$opportunity.job_family.name.en_us,\n        \"locations\":[$map($opportunity.locations,function($location){\n            {\n                \"country\":$location.country.name.en_us,\n                \"state\":$location.state.code,\n                \"city\":$location.city,\n                \"countryIsoCode\":$location.country.code\n            }\n        })],\n        \"status\":$opportunity.status=\"Published\"?\"OPEN\":\"CLOSED\",\n        \"positionCategory\":$opportunity.job.description,\n        \"positionLevel\":$opportunity.position,\n        \"company\": $opportunity.company!=null?$opportunity.company.name.en_us:null,\n        \"remoteType\":$opportunity.job_location_type,\n        \"startDate\": $opportunity.published_date,\n        \"endDate\": $opportunity.closed_date,\n        \"createdDate\": $opportunity.created_at,\n        \"lastUpdatedDate\":$opportunity.updated_at,\n        \"updatedAt\":$now(),\n        \"isDeleted\":$opportunity.status=\"Published\"?false:true,\n        \"insertedAt\":$now()\n    }\n})]",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/opportunities",
+          "headers": {},
+          "queryParams": {
+            "updated_before": "${updated_before}",
+            "updated_after": "${updated_after}"
+          },
+          "contentType": null,
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "updated_after",
+            "endDateTimeKey": "updated_before",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-candidate-application-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "((($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null) or $exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)) and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-candidate-already-exists",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-candidate-application-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates-lookup",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": {
+              "email": "${email}"
+            },
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":id}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"candidate not found for emailId\"}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-create-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "firstName",
+                "jsonataExpression": "inputData.candidate.firstName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastName",
+                "jsonataExpression": "inputData.candidate.lastName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "phoneNumber",
+                "jsonataExpression": "inputData.candidate.phoneNumber",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "email",
+                "jsonataExpression": "inputData.candidate.email",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "providerId",
+                "jsonataExpression": "inputData.candidate.customFields.providerName != null ? inputData.candidate.customFields.providerName : \"Other - Joveo\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/candidates",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \"name\": { \"first\": \"${firstName}\", \"last\": \"${lastName}\" }, \"contact_info\": { \"phone\": {     \"primary\": \"${phoneNumber}\" }, \"email\": \"${email}\" }, \"provider\": { \"name\": \"${providerId}\", \"method\": \"CandidateImport\", \"type\": \"ThirdPartyIntegration\" }}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"candidateId\":id}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$.message_code}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.email) and inputData.candidate.email != null and $exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and $exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(response.candidateId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-create-applications-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-create-candidate",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.candidate.customFields.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "availableStartDate",
+                "jsonataExpression": "inputData.candidate.customFields.availableStartDate",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicantSource",
+                "jsonataExpression": "inputData.candidate.customFields.sourceId != null ? inputData.candidate.customFields.sourceId : \"ee9e2991-ee55-42a3-add6-6dad8110810a\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \"candidate\": { \"id\": \"${candidateId}\" }, \"opportunity\": { \"id\": \"${atsJobId}\" }, \"applicant_source\": { \"id\": \"${applicantSource}\" }, \"available_start_date\": \"${availableStartDate}\", \"creation_method\": \"CandidateImport\", \"screening_question_responses\": [$map(response.screeningQuestionResponses, function($sq) { {     \"id\": $sq.id,     \"response\": ($exists($sq.choices) and $sq.choices != null) ?          ($filter($map($sq.choices, function($v, $i) {             ($v = $lookup(inputData.candidate.customFields, $sq.question)) ? $i : -1         }), function($v) { $v > -1 })) :          $lookup(inputData.candidate.customFields, $sq.question) } })]\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"applicationId\":id, \"candidateId\":candidate.id, \"jobId\":opportunity.id\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($.message_code)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and \n$exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and \n$not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null) and \n$exists(inputData.candidate.customFields.atsJobId) and inputData.candidate.customFields.atsJobId!= null and \n$exists(inputData.candidate.customFields.availableStartDate) and inputData.candidate.customFields.availableStartDate!=null\n"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-create-applications-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-candidate-already-exists",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "inputData.candidate.customFields.atsJobId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "availableStartDate",
+                "jsonataExpression": "inputData.candidate.customFields.availableStartDate",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicantSource",
+                "jsonataExpression": "inputData.candidate.customFields.sourceId != null ? inputData.candidate.customFields.sourceId : \"ee9e2991-ee55-42a3-add6-6dad8110810a\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{ \"candidate\": { \"id\": \"${candidateId}\" }, \"opportunity\": { \"id\": \"${atsJobId}\" }, \"applicant_source\": { \"id\": \"${applicantSource}\" }, \"available_start_date\": \"${availableStartDate}\", \"creation_method\": \"CandidateImport\", \"screening_question_responses\": [$map(response.screeningQuestionResponses, function($sq) { {     \"id\": $sq.id,     \"response\": ($exists($sq.choices) and $sq.choices != null) ?          ($filter($map($sq.choices, function($v, $i) {             ($v = $lookup(inputData.candidate.customFields, $sq.question)) ? $i : -1         }), function($v) { $v > -1 })) :          $lookup(inputData.candidate.customFields, $sq.question) } })]\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"applicationId\":id, \"candidateId\":candidate.id, \"jobId\":opportunity.id\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($.message_code)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and \n$exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and \n$not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null) and \n$exists(inputData.application.atsJobId) and inputData.application.atsJobId != null and \n$exists(inputData.candidate.customFields.availableStartDate) and inputData.candidate.customFields.availableStartDate!=null\n"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-upload-resume-applications-one",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-create-applications-one",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "response.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.application.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentText",
+                "jsonataExpression": "inputData.application.attachment.attachmentText",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications/${applicationId}/documents",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{ \"file\":\"${attachmentContent}\", \"metadata\":{ \"file_name\":\"${fileName}\", \"description\":\"${attachmentText}\", \"document_type\":\"Resume\" }\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "file"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"fileId\":id\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($.message_code)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and\n$exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.applicationId)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-upload-resume-applications-two",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-create-applications-two",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationId",
+                "jsonataExpression": "response.applicationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentContent",
+                "jsonataExpression": "inputData.application.attachment.attachmentContent",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "fileName",
+                "jsonataExpression": "inputData.application.attachment.attachmentFileName",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "attachmentText",
+                "jsonataExpression": "inputData.application.attachment.attachmentText",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "/api/applications/${applicationId}/documents",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "MULTIPART_FORM_DATA",
+          "requestPayload": {
+            "requestBody": "{ \"file\":\"${attachmentContent}\", \"metadata\":{ \"file_name\":\"${fileName}\", \"description\":\"${attachmentText}\", \"document_type\":\"Resume\" }\n}",
+            "requestBodyConverter": [
+              {
+                "fileConvertType": "Base64ToFile",
+                "field": "file"
+              }
+            ]
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"fileId\":id\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\":$string($.message_code)}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because data might be missing.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.application.attachment) and inputData.application.attachment != null and\n$exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.applicationId)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-applications-integration",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "$"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($)>0"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/applications",
+          "headers": {},
+          "queryParams": {
+            "updated_before": "${updated_before}",
+            "updated_after": "${updated_after}"
+          },
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "PageConfig",
+            "limitKey": "per_page",
+            "limitValue": 200,
+            "pageValue": 1,
+            "pageKey": "page"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "updated_after",
+            "endDateTimeKey": "updated_before",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-recruiting-processes-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{\n                            \"recProcessResponse\": $,\n                            \"applicationStage\": $eval($string(${applicationStage})),\n                            \"stepId\": \"${stepId}\"\n                        }"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-get-applications-integration",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "recruitingProcessId",
+                "jsonataExpression": "[$map($$, function($stage) {\n $stage.recruiting_process.id\n})]",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stepId",
+                "jsonataExpression": "[$map($$, function($stage) {\n        $stage.recruiting_process.step_id\n    })]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationStage",
+                "jsonataExpression": "[$map($$,function($application){\n    $string({\n        \"atsJobId\": $application.opportunity.id,\n        \"atsCandidateId\": $application.candidate.id,\n        \"atsApplicationId\": $application.id,\n        \"stageId\": $application.recruiting_process.step_id,\n        \"appliedAt\": $application.applied_date,\n        \"createdDate\": \"\",\n        \"lastUpdatedDate\": $application.updated_at,\n        \"insertedAt\": $now(),\n        \"updatedAt\": $now(),\n        \"customFields\":{\n            \"applicantSourceName\":$application.applicant_source.name.en_us,\n            \"recruitingProcess\":$application.recruiting_process.id\n        }\n    })\n   })]",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/recruiting-processes/${recruitingProcessId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($)>0"
+            }
+          ]
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-job-refnumber-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{\n    \"recProcessResponse\": $eval($string(${recProcessResponse})),\n    \"applicationStage\": $eval($string(${applicationStage})),\n    \"refNumber\": $.requisition_number\n  ,  \"stepId\": \"${stepId}\"\n}"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-get-recruiting-processes-integration",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "opportunityId",
+                "jsonataExpression": "$.applicationStage.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "recProcessResponse",
+                "jsonataExpression": "$string($.recProcessResponse)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stepId",
+                "jsonataExpression": "$.stepId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationStage",
+                "jsonataExpression": "$string($.applicationStage)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/opportunities/${opportunityId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-candidate-email-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{\n    \"recProcessResponse\": $eval($string(${recProcessResponse})),\n    \"applicationStage\": $eval($string(${applicationStage})),\n    \"refNumber\": \"${requisition_number}\",\n    \"emailId\": $.contact_info.email,\n    \"stepId\": \"${stepId}\"\n}"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(id)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-get-job-refnumber-integration",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "$.applicationStage.atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "recProcessResponse",
+                "jsonataExpression": "$string($.recProcessResponse)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "requisition_number",
+                "jsonataExpression": "$.refNumber",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stepId",
+                "jsonataExpression": "$.stepId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "applicationStage",
+                "jsonataExpression": "$string($.applicationStage)",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/candidates/${candidateId}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ]
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "ukg-get-application-stage-integration",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{\n        \"atsJobId\": $.refNumber,\n        \"atsCandidateId\": $.applicationStage.atsCandidateId,\n        \"atsApplicationId\": $.applicationStage.atsApplicationId,\n        \"stageId\": $.applicationStage.stageId,\n        \"stageName\":(\n        $getStageMapping := function($stage) {\n            $stage in [\"New\",\"Apply\"] ? \"Apply\" :\n            $stage in [\"Phone Screen Invite\", \"First Follow-Up\", \"Final Outreach\",\"Phone Screen Scheduled\",\"Hiring Manager Review\",\"1st Contact\", \"2nd Contact\", \"3rd Contact\", \"Sent to Hiring Manager\", \"Phone Screen\",\"1st Contact\", \"2nd Contact\", \"3rd Contact\", \"Phone Screen\", \"Sent to Hiring Manager\",\"Application under review\", \"Phone Screen\"] ? \"Review\" :\n            $stage in [\"Interview\", \"2nd Interview\", \"Pending Hiring Manager Decision\",\"Interview\", \"2nd Interview\", \"Hiring Manager Post Interview\",\"Interview\", \"2nd Interview\", \"Hiring Manager Post Interview\"] ? \"Interview\" :\n            $stage in [\"Build Offer\", \"Offer Pending\",\"Initiate Pre-Employment Requirements\",\"References\", \"Offer\", \"Background Check\",\"References & Act 168\", \"Offer\", \"Background Check\",\"References and Accutrace\",\"Offer\"] ? \"Offer\" :\n            $stage in [\"Declined – After Initial Screening\", \"Declined – After Interview\",\"Declined – Moved to Another Role\",\"Declined – Candidate Withdrew\",\"Declined - Unresponsive\",\"Not Reviewed – Position Canceled / On Hold\",\"Not Reviewed - Late Application\",\"Declined - After Resume Reviewed\",\"Moved to another position\", \"Applicant Withdrew\", \"Decline\",\"Moved to another position\", \"Applicant Withdrew\", \"Decline\"] ? \"Rejected\" :\n            $stage in [\"Hire\", \"Hired\"] ? \"Hire\" :\n            $stage\n        };\n\n        $getStageName:=function($steps,$stepId){\n            (\n                $status := [$filter($steps, function($step) {\n                 $step.id = $stepId\n                })];\n                $count($status)>0?$getStageMapping($status[0].name.en_us):\"UNKNOWN\"\n            )\n        };\n        $getStageName($.recProcessResponse.steps, $.stepId)\n        ),\n        \"appliedAt\": $.applicationStage.appliedAt!=null?$fromMillis($toMillis($.applicationStage.appliedAt)):null,\n        \"createdDate\": $.applicationStage.lastUpdatedDate!=null?$fromMillis($toMillis($.applicationStage.lastUpdatedDate)):null,\n        \"lastUpdatedDate\":$.applicationStage.lastUpdatedDate!=null?$fromMillis($toMillis($.applicationStage.lastUpdatedDate)):null,\n        \"insertedAt\": $now(),\n        \"updatedAt\": $now(),\n        \"customFields\":{\n            \"applicantSourceName\":$.applicationStage.customFields.applicantSourceName,\n            \"recruitingProcess\":$.applicationStage.customFields.recruitingProcess,\n            \"email\":$.emailId\n        }\n}",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT",
+              "ATS_APPLICATION_APPLIED_DATE"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "ukg-get-candidate-email-integration",
+            "dependencyFields": [],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "api/recruiting-processes",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            }
+          ],
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "ukg-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://service2.ultipro.com/talent/recruiting/v2/SAL1014SAMN/api/applications",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "( $isValidCandidateId := function($candidateId) { $type($candidateId) = \"string\" and $length($candidateId) > 0 }; ($exists(ukg_create_applications_one[0].errorMessage) or false = $isValidCandidateId(ukg_create_applications_one[0].candidateId)) ? ( ($exists(ukg_create_applications_two[0].errorMessage) or false = $isValidCandidateId(ukg_create_applications_two[0].candidateId)) ? { \"data\": null, \"errors\": [ { \"errorCode\": \"500\", \"errorType\": \"Internal error\", \"message\": \"Error while creating application on ukg.\", \"params\": { \"ukg_create_applications_one_error\": $string(ukg_create_applications_one[0].errorMessages), \"ukg_create_applications_two_error\": $string(ukg_create_applications_two[0].errorMessages), \"error\": $string($) } } ] } : { \"data\": { \"candidateId\": ukg_create_applications_two[0].candidateId, \"applicationId\": ukg_create_applications_two[0].applicationId, \"customFields\": { \"jobId\": ukg_create_applications_two[0].jobId, \"fileId\": ukg_upload_resume_applications_two[0].fileId } } } ) : { \"data\": { \"candidateId\": ukg_create_applications_one[0].candidateId, \"applicationId\": ukg_create_applications_one[0].applicationId, \"customFields\": { \"jobId\": ukg_create_applications_one[0].jobId, \"fileId\": ukg_upload_resume_applications_one[0].fileId } } })"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ]

@@ -1,0 +1,34 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://pservjoveo.csod.com",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "OAuth2Info",
+      "clientIdKey": "client_id",
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://pservjoveo.csod.com/services/api/oauth2/token",
+        "tokenJsonataExpression": "\"Bearer \" & access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "authorization",
+      "grantTypeValue": "client_credentials",
+      "expiresInMillis": 0,
+      "additionalParams": {},
+      "customerOauthValues": {},
+      "encodedClientSecretKey": "client_secret",
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "OAUTH_2",
+    "lastDataSyncTime": "2025-01-01T07:45:12.064211386",
+    "nextDataSyncTime": "2025-03-18T08:35:36.507857667",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 0,
+    "dataSyncFrequencyInMinutes": 15
+  }

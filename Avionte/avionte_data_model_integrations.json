@@ -1,0 +1,3049 @@
+[
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "avionte-application-stage-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "eventName & EventName != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "frontOfficeTenantId & FrontOfficeTenantId != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(resource & Resource != \"\")"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-nomiation-stage",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{ \"atsJobId\": jobId, \"atsCandidateId\": talentId, \"atsApplicationId\": id, \"stageId\": $exists(jobActivityName) ? jobActivityName : stageType, \"stageName\": $exists(jobActivityName) ? jobActivityName : stageType, \"appliedAt\": stagedDate, \"createdDate\": stagedDate, \"lastUpdatedDate\": $exists(declinedStageDate) and declinedStageDate != null ? declinedStageDate : $exists(jobActivityStartDate) ? jobActivityStartDate : stagedDate,  \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": {   \"bucket\": \"stage_event\",   \"nominationId\": id } }"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-application-stage-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "nominationId",
+                "jsonataExpression": "$contains(resource & Resource, '\"NominationId\":') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId'), '\"NominationId\":')) : 0",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/stage/${nominationId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-nomiation-stage-talent",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": \"${atsJobId}\", \"atsCandidateId\": \"${atsCandidateId}\", \"atsApplicationId\": \"${atsApplicationId}\", \"stageId\": \"${stageId}\", \"stageName\": \"${stageName}\", \"appliedAt\": \"${appliedAt}\", \"createdDate\": \"${createdDate}\", \"lastUpdatedDate\": lastUpdatedDate, \"insertedAt\": \"${insertedAt}\", \"updatedAt\": \"${updatedAt}\", \"customFields\": { \"bucket\": \"stage_event\", \"nominationId\": \"${nominationId}\", \"email\": emailAddress  } }",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-get-nomiation-stage",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsCandidateId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsApplicationId",
+                "jsonataExpression": "atsApplicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "stageId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageName",
+                "jsonataExpression": "stageName",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "nominationId",
+                "jsonataExpression": "customFields.nominationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastUpdatedDate",
+                "jsonataExpression": "$exists(lastUpdatedDate) and lastUpdatedDate != null ? lastUpdatedDate : $now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "insertedAt",
+                "jsonataExpression": "insertedAt",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "updatedAt",
+                "jsonataExpression": "updatedAt",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appliedAt",
+                "jsonataExpression": "appliedAt",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "createdDate",
+                "jsonataExpression": "createdDate",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-pipeline-stage",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "{ \"atsJobId\": $[0].jobId, \"atsCandidateId\": $[0].talentId, \"atsApplicationId\": \"${pipelineId}\", \"stageId\": $exists($[0].declinedDate) and $[0].declinedDate != null ? \"Application Declined\" : $[0].pipelineStage, \"stageName\": $exists($[0].declinedDate) and $[0].declinedDate != null ? \"Application Declined\" : $[0].pipelineStage, \"appliedAt\": $exists($[0].declinedDate) and $[0].declinedDate != null ? $[0].declinedDate : $[0].pipelinedDate, \"createdDate\": $exists($[0].declinedDate) and $[0].declinedDate != null ? $[0].declinedDate : $[0].pipelinedDate, \"lastUpdatedDate\": $exists($[0].declinedDate) and $[0].declinedDate != null ? $[0].declinedDate : $[0].pipelinedDate, \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": { \"bucket\": \"pipeline_event\", \"pipelineId\": \"${pipelineId}\", \"source\": $[0].source } }"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-application-stage-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "pipelineId",
+                "jsonataExpression": "$contains(resource & Resource, '\"PipelineId\":') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId'), '\"PipelineId\":')) : \"\"",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "pipelineId",
+                "jsonataExpression": "$contains(resource & Resource, '\"PipelineId\":') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId'), '\"PipelineId\":')) : \"\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/pipeline/multi-query",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": "[${pipelineId}]"
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-pipeline-stage-talent",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": \"${atsJobId}\", \"atsCandidateId\": \"${atsCandidateId}\", \"atsApplicationId\": \"${atsApplicationId}\", \"stageId\": \"${stageId}\", \"stageName\": \"${stageName}\", \"appliedAt\": \"${appliedAt}\", \"createdDate\": \"${createdDate}\", \"lastUpdatedDate\": \"${lastUpdatedDate}\", \"insertedAt\": \"${insertedAt}\", \"updatedAt\": \"${updatedAt}\", \"customFields\": { \"bucket\": \"pipeline_event\", \"pipelineId\": \"${pipelineId}\", \"source\": \"${source}\", \"email\": emailAddress } }",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-get-pipeline-stage",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsCandidateId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsApplicationId",
+                "jsonataExpression": "atsApplicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageId",
+                "jsonataExpression": "stageId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "stageName",
+                "jsonataExpression": "stageName",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastUpdatedDate",
+                "jsonataExpression": "$exists(lastUpdatedDate) and lastUpdatedDate != null ? lastUpdatedDate : $now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "insertedAt",
+                "jsonataExpression": "$now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "updatedAt",
+                "jsonataExpression": "$now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "pipelineId",
+                "jsonataExpression": "customFields.pipelineId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "source",
+                "jsonataExpression": "customFields.source",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appliedAt",
+                "jsonataExpression": "appliedAt",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "createdDate",
+                "jsonataExpression": "createdDate",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-web-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "($match := $reduce($filter($, function($v) { $v.jobId = ${jobId} }), function($acc, $val) { $exists($acc) ? $acc : $val }); $exists($match) ? { \"atsApplicationId\": $string($match.webApplicantId), \"atsJobId\": $string($match.jobId), \"atsCandidateId\": $string($match.talentId), \"source\": $string($match.source), \"status\": \"${appStatus}\", \"createdDate\": $match.applyDate, \"lastUpdatedDate\": $now(), \"insertedAt\": $now(), \"updatedAt\": $now()} : {})",
+            "resPassingJsonataExpression": "($match := $reduce($filter($, function($v) { $v.jobId = ${jobId} }), function($acc, $val) { $exists($acc) ? $acc : $val }); $exists($match) ? { \"atsApplicationId\": $string($match.webApplicantId), \"atsJobId\": $string($match.jobId), \"atsCandidateId\": $string($match.talentId), \"source\": $string($match.source), \"status\": \"${appStatus}\", \"createdDate\": $match.applyDate, \"lastUpdatedDate\": $now(), \"insertedAt\": $now(), \"updatedAt\": $now()} : {})"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-application-stage-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$contains(resource & Resource, '\"TalentId\"') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId\"'), '\"TalentId\":')) : 0",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "$contains(resource & Resource, '\"JobId\"') ? $number($substringAfter($substringBefore(resource & Resource, ',\"TalentId\"'), '\"JobId\":')) : 0",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appStatus",
+                "jsonataExpression": "eventName = \"talent_applied_for_job\" or EventName = \"talent_applied_for_job\" ? \"Apply\" : \"Application Modified\"",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/webapplicants/talent/${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-web-application-talent",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "{ \"atsJobId\": \"${atsJobId}\", \"atsCandidateId\": \"${atsCandidateId}\", \"atsApplicationId\": \"${atsApplicationId}\", \"stageId\": \"${status}\", \"stageName\": \"${status}\", \"appliedAt\": \"${appliedAt}\", \"createdDate\": \"${createdDate}\", \"lastUpdatedDate\": \"${lastUpdatedDate}\", \"insertedAt\": \"${insertedAt}\", \"updatedAt\": \"${updatedAt}\", \"customFields\": { \"bucket\": \"web_applicant_event\", \"webApplicationId\": \"${atsApplicationId}\", \"source\": \"${source}\", \"email\": emailAddress } }",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-get-web-application",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsApplicationId",
+                "jsonataExpression": "atsApplicationId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "status",
+                "jsonataExpression": "status",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsJobId",
+                "jsonataExpression": "atsJobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "atsCandidateId",
+                "jsonataExpression": "atsCandidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "source",
+                "jsonataExpression": "source",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "lastUpdatedDate",
+                "jsonataExpression": "$exists(createdDate) and createdDate != null ? createdDate : $now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "insertedAt",
+                "jsonataExpression": "$now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "updatedAt",
+                "jsonataExpression": "$now()",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "appliedAt",
+                "jsonataExpression": "createdDate",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "createdDate",
+                "jsonataExpression": "createdDate",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE_ACTIVITY",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-activity-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "Avionte_candidate_activity_post[0].id != null ? {\"data\": {\"candidateActivityId\": $string(Avionte_candidate_activity_post[0].id),\"customFields\": Avionte_candidate_activity_post[0]},\"errors\": null} : {\"data\": null,\"errors\": [{\"errorCode\": null,\"errorType\": null,\"message\": $string($),\"params\": {}}]}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "avionte-candidate-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "eventName & EventName != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "frontOfficeTenantId & FrontOfficeTenantId != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(resource & Resource != \"\")"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-candidate",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "($mapStatus := function($status) { $status = \"Filled\" ? \"OPEN\" : $status = \"Deleted\" ? \"DELETED\" : \"DRAFTED\" }; {\"atsCandidateId\": $string(id), \"firstName\": firstName, \"lastName\": lastName, \"email\": emailAddress, \"phoneNumbers\": [ {\"countryCode\": \"US\", \"phoneNumber\": homePhone ? homePhone : mobilePhone, \"isPrimary\": true, \"customFields\": {} } ], \"canEmail\": emailOptOut = false, \"links\": [link], \"address\": { \"country\": residentAddress.country, \"countryIsoCode\": residentAddress.country, \"state\": residentAddress.state_Province, \"city\": residentAddress.city, \"postalCode\": residentAddress.postalCode, \"customFields\": {} }, \"workExperience\": [], \"education\": [], \"customFields\": $, \"createdDate\": createdDate, \"lastUpdatedDate\": lastUpdatedDate, \"insertedAt\": $now(), \"updatedAt\": $exists(lastUpdatedDate) ? lastUpdatedDate : $now() })",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_LINKS",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_WORK_EXPERIENCE",
+              "ATS_CANDIDATE_EDUCATION",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-candidate-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "$contains(resource & Resource, '\"Id\":') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId\"'), '\"Id\":')) : 0",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${candidateId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "ATTACHMENT",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "avionte-attachment-dummy-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "eventName & EventName != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "frontOfficeTenantId & FrontOfficeTenantId != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(resource & Resource != \"\")"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-candidate-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null) or ($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-get-job-for-candidate-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "{\"frontOfficeId\": frontOfficeId}",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-application-candidate-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.application.atsJobId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/job/${jobId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"frontOfficeId\": inputData.candidate.customFields.jobMetaData.customStringFields.frontOfficeId}"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"frontOfficeId\": frontOfficeId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$not($exists(inputData.candidate.customFields.jobMetaData.customStringFields.frontOfficeId))"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-candidate-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-get-job-for-candidate-application",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(inputData.candidate.atsCandidateId) = true and inputData.candidate.atsCandidateId != null ? \"/\" & inputData.candidate.atsCandidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"firstName\": inputData.candidate.firstName,\"lastName\": inputData.candidate.lastName,\"mobilePhone\": inputData.candidate.phoneNumbers[0].phoneNumber,\"emailAddress\": inputData.candidate.email,\"origin\": inputData.candidate.customFields.orgin = null ? \"Joveo\" : inputData.candidate.customFields.orgin,\"status\": \"Online Applicant\",\"residentAddress\": {\"city\": inputData.candidate.address.city,\"postalCode\": inputData.candidate.address.postalCode, \"state_Province\": inputData.candidate.address.state, \"country\": inputData.candidate.customFields.countryCode},\"talentResume\": ($exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null) ? {\"resumeFilename\": inputData.application.attachment.attachmentFileName,\"resumeContents\": inputData.application.attachment.attachmentContent} : null,\n \"textConsent\":inputData.candidate.customFields.questionAnswers.additionalFields.smsConfirmation[0]?\n   (inputData.candidate.customFields.questionAnswers.additionalFields.smsConfirmation[0]='Yes'?'Opt In':'Opt Out'):'No Response', \n\"frontOfficeId\": response.frontOfficeId\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": false}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": $number($split($substringAfter(matchedId, \": \"), \",\")[-1].$replace(\" \", \"\")),  \"existing\": true}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": $string(inputData.candidate.atsCandidateId),  \"existing\": true}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-candidate-get-old",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-application-candidate-post",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null ? \"/\" & response.candidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": true, \"candidateObject\": $}"
+            },
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": true}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$merge([$, {\"errorMessage\": \"Again error with conflict\"}])"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": response.candidateId,  \"existing\": false }"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.existing) = true and response.existing = true and $exists(response.candidateId) = true and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-candidate-repost",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-application-candidate-get-old",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null ? \"/\" & response.candidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([response.candidateObject, {\"firstName\": inputData.candidate.firstName,\"lastName\": inputData.candidate.lastName,\"mobilePhone\": inputData.candidate.phoneNumbers[0].phoneNumber,\"emailAddress\": inputData.candidate.email,\"origin\": inputData.candidate.customFields.orgin = null ? \"Joveo\" : inputData.candidate.customFields.orgin,\"status\": \"Online Applicant\",\"residentAddress\": {\"city\": inputData.candidate.address.city,\"province\": inputData.candidate.address.city,\"postCode\": inputData.candidate.address.postalCode, \"country\": inputData.candidate.address.country},\"talentResume\": ($exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null) ? {\"resumeFilename\": inputData.application.attachment.attachmentFileName,\"resumeContents\": inputData.application.attachment.attachmentContent} : null}])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": false}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$merge([$, {\"errorMessage\": \"Again error with conflict\"}])"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": response.candidateId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.existing) = true and response.existing = true and $exists(response.candidateId) = true and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-application-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-application-candidate-repost",
+            "dependencyFields": [],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/webapplicants",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"talentId\": $number(response.candidateId),\n  \"jobId\": $number(inputData.application.atsJobId),\n  \"applicationSource\": (\n        inputData.candidate.customFields.publisherMetaData.utmTags[$string(key) = \"utm_source\"].value\n            ? inputData.candidate.customFields.publisherMetaData.utmTags[$string(key) = \"utm_source\"].value\n        : (\n            inputData.candidate.customFields.publisherName != null and inputData.candidate.customFields.publisherName != \"\"\n                ? inputData.candidate.customFields.publisherName\n            : (\n                inputData.application.customFields.source != null and inputData.application.customFields.source != \"\"\n                    ? inputData.application.customFields.source\n                : \"Joveo\"\n              )\n          )\n    )\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(webApplicantId) and webApplicantId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"applicationId\": webApplicantId}"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed no jobId present\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null and $exists(inputData.application.atsJobId) = true and inputData.application.atsJobId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-application-talent-questionnaire-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-application-candidate-repost",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(response.candidateId) and response.candidateId != null ? \"/\" & response.candidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}/talent-questionnaire",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"group\": {\n    \"groupName\": inputData.candidate.firstName & \"_questionnaire\"\n  },\n  \"questions\": [$map(\n    $keys(inputData.candidate.questionAnswers),\n    function($qs) {\n      {\n        \"questionText\": $qs,\n        \"answers\": {\n          \"answerText\": $lookup(inputData.candidate.questionAnswers, $qs)\n        }\n      }\n    }\n  )]\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 404,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null\nand $exists(inputData.candidate.questionAnswers) and inputData.candidate.questionAnswers!=null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "avionte-job-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "eventName & EventName != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "frontOfficeTenantId & FrontOfficeTenantId != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(resource & Resource != \"\")"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-job",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "{ \"atsJobId\": $string(id),\n \"refNumber\": $string(id), \n \"title\": title,\n\"description\": $exists(description) and description != null ? description : \"JOB DESCRIPTION NOT ADDED ON AVIONTE\", \n\"url\": link,\n \"status\":posted=true?\"OPEN\":\"CLOSED\",\n \"locations\": [ { \"country\": worksiteAddress.country, \n \"countryIsoCode\": worksiteAddress.country, \n \"state\": worksiteAddress.stateProvince, \n \"city\": worksiteAddress.city,\n  \"postalCode\": worksiteAddress.postalCode, \n  \"customFields\": {}, \"isPrimary\": true } ],\n   \"department\": $exists(department) ? department : null, \n   \"positionCategory\": $exists(positionCategory) ? positionCategory : \"\", \n   \"positionLevel\": \"\", \"remoteType\": null, \"company\": companyName, \n   \"recruiters\": representativeUsers ~> $map(function($v) { \"Recruiter \" & $string($v) }) ~> $append([]), \"hiringManagers\": [], \"createdDate\": createdDate, \"lastUpdatedDate\": $exists(lastUpdatedDate) ? lastUpdatedDate : $now(), \n\"startDate\": startDate, \"endDate\": endDate, \"insertedAt\": $now(), \"customFields\": $ }",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "\"${eventType}\" != \"job_created\" ? $ : $merge([$, { \"status\": \"CLOSED\" }])",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-job-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "$contains(resource & Resource, '\"Id\"') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId\"'), '\"Id\":')) : 0",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "eventType",
+                "jsonataExpression": "eventName & EventName",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/job/${jobId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "avionte-application-stage-response-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/stage",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "(\n  $exists(avionte_add_application_to_nomiation[0].id) ?\n  {\n    \"data\": {\n      \"newStatus\": avionte_add_application_to_nomiation[0].jobActivityName,\n      \"jobId\": avionte_add_application_to_nomiation[0].jobId,\n      \"candidateId\": avionte_add_application_to_nomiation[0].talentId,\n      \"applicationId\": avionte_add_application_to_nomiation[0].id\n    }\n  } :\n  (\n    $exists(avionte_application_nomiation_stage_change[0].id) ?\n    {\n      \"data\": {\n        \"newStatus\": avionte_application_nomiation_stage_change[0].jobActivityName,\n        \"jobId\": avionte_application_nomiation_stage_change[0].jobId,\n        \"candidateId\": avionte_application_nomiation_stage_change[0].talentId,\n        \"applicationId\": avionte_application_nomiation_stage_change[0].id\n      }\n    } :\n    {\n      \"data\": null,\n      \"errors\": [\n        {\n          \"errorCode\": $exists(avionte_application_nomiation_stage_change[0].statusCode) ?\n            avionte_application_nomiation_stage_change[0].statusCode :\n            \"500\",\n          \"message\": \"Error while updating avionte application status.\",\n          \"params\": {\n            \"error\": $\n          }\n        }\n      ]\n    }\n  )\n)\n"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "JOB",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-all-postings",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": "[$map($, function($v) { $substringBefore($substringAfter($v.ApplyLink, \"ID=\"), \"&\") })]"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$.({ \"atsJobId\": $substringBefore($substringAfter(ApplyLink, \"ID=\"), \"&\"), \"refNumber\": $substringBefore($substringAfter(ApplyLink, \"ID=\"), \"&\"), \"updatedAt\": $now(), \"status\": \"OPEN\", \"customFields\" : { \"postedJsonJob\": $ }})",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_UPDATED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "NO_AUTH"
+          ],
+          "apiPath": "${jsonJobUrl}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-posted-jobs",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "{ \"atsJobId\": $string(id), \"refNumber\": $string(id), \"title\": title, \"description\": $exists(description) and description != null ? description : \"JOB DESCRIPTION NOT ADDED ON AVIONTE\", \"url\": link, \"locations\": [ { \"country\": worksiteAddress.country, \"countryIsoCode\": worksiteAddress.country, \"state\": worksiteAddress.stateProvince, \"city\": worksiteAddress.city, \"postalCode\": worksiteAddress.postalCode, \"customFields\": {}, \"isPrimary\": true } ], \"department\": $exists(department) ? department : null, \"positionCategory\": $exists(positionCategory) ? positionCategory : \"\", \"positionLevel\": \"\", \"remoteType\": null, \"company\": companyName, \"recruiters\": representativeUsers ~> $map(function($v) { \"Recruiter \" & $string($v) }) ~> $append([]), \"hiringManagers\": [], \"createdDate\": createdDate, \"lastUpdatedDate\": $exists(lastUpdatedDate) ? lastUpdatedDate : null, \"startDate\": startDate, \"endDate\": endDate, \"insertedAt\": $now(), \"customFields\": $ }",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$",
+            "targetFields": [
+              "JOVEO_JOB_ID",
+              "JOVEO_JOB_CUSTOMER_ID",
+              "ATS_JOB_ID",
+              "ATS_JOB_REF_NUMBER",
+              "ATS_JOB_TITLE",
+              "ATS_JOB_DESCRIPTION",
+              "ATS_JOB_URL",
+              "ATS_JOB_LOCATIONS",
+              "ATS_JOB_DEPARTMENT",
+              "ATS_JOB_STATUS",
+              "ATS_JOB_POSITION_CATEGORY",
+              "ATS_JOB_POSITION_LEVEL",
+              "ATS_JOB_REMOTE_TYPE",
+              "ATS_JOB_COMPANY",
+              "ATS_JOB_RECRUITERS",
+              "ATS_JOB_HIRING_MANAGERS",
+              "ATS_JOB_CREATED_DATE",
+              "ATS_JOB_LAST_UPDATED_DATE",
+              "ATS_JOB_START_DATE",
+              "ATS_JOB_END_DATE",
+              "ATS_JOB_INSERTED_AT",
+              "ATS_JOB_CUSTOM_FIELDS",
+              "ATS_JOB_IS_DELETED",
+              "ATS_JOB_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-get-all-postings",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "$",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "ARRAY_OF_PRIMITIVES",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/job/${jobId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "salesforce-mindfield-get-application-stages",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$$[$exists($.Id) and $exists($.Job__c) and $.Job__c != null and $.Job__c != \"\" and $exists($.Applicant__c) and $.Applicant__c != null and $.Applicant__c != \"\"].{ \"atsApplicationStageId\": $.Id, \"atsJobId\": $.Job__c, \"atsCandidateId\": $.Applicant__c, \"atsApplicationId\": $.Id, \"stageId\": ($exists($.Status__c) and $.Status__c != null and $.Status__c != \"\") ? $.Status__c : $.Id, \"stageName\": ($exists($.Status__c) and $.Status__c != null and $.Status__c != \"\") ? $.Status__c : \"\", \"appliedAt\": ($exists($.CreatedDate) and $.CreatedDate != null) ? $fromMillis($toMillis($replace($.CreatedDate, /([+\\-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"createdDate\": ($exists($.CreatedDate) and $.CreatedDate != null) ? $fromMillis($toMillis($replace($.CreatedDate, /([+\\-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"lastUpdatedDate\": ($exists($.LastModifiedDate) and $.LastModifiedDate != null) ? $fromMillis($toMillis($replace($.LastModifiedDate, /([+\\-]\\d{2})(\\d{2})/, \"$1:$2\"))) : null, \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": $merge([$, {\"email\": ($exists($.Applicant__r) and $exists($.Applicant__r.Email__c) and $.Applicant__r.Email__c != null and $.Applicant__r.Email__c != \"\") ? $.Applicant__r.Email__c : null}]) }]",
+            "targetFields": [
+              "JOVEO_APPLICATION_STAGE_ID",
+              "JOVEO_APPLICATION_STAGE_APPLICATION_ID",
+              "JOVEO_APPLICATION_STAGE_CUSTOMER_ID",
+              "ATS_APPLICATION_STAGE_JOB_ID",
+              "ATS_APPLICATION_STAGE_CANDIDATE_ID",
+              "ATS_APPLICATION_STAGE_APPLICATION_ID",
+              "ATS_APPLICATION_STAGE_ID",
+              "ATS_APPLICATION_STAGE_NAME",
+              "ATS_APPLICATION_APPLIED_DATE",
+              "ATS_APPLICATION_STAGE_CREATED_DATE",
+              "ATS_APPLICATION_STAGE_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_STAGE_INSERTED_AT",
+              "ATS_APPLICATION_STAGE_UPDATED_AT",
+              "ATS_APPLICATION_STAGE_CUSTOM_FIELDS",
+              "ATS_APPLICATION_STAGE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "services/data/v58.0/query/?q=SELECT+Id,Job__c,Applicant__c,Status__c,Applicant__r.Email__c,LastModifiedDate,CreatedDate,Applicant_Status_Last_Updated__c,PhoneScreenStatus__c,Presented_Date_Time__c,Hired_Push_to_Workday_Date__c,Accepted_Date_Time__c,Declined_Reason_by_MFG__c,Rejected_Reason_by_HM__c,Rejected_Date_Time__c+FROM+Applicant_Job_Apps__c+WHERE+LastModifiedDate+>+${startDateTime}+AND+LastModifiedDate+<+${endDateTime}+ORDER+BY+LastModifiedDate+DESC",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": null,
+          "dateRangeConfig": {
+            "startDateTimeKey": "startDateTime",
+            "endDateTimeKey": "endDateTime",
+            "dateTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          },
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION_STAGE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "avionte-application-stage-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.jobId) and inputData.jobId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.applicationId) and inputData.applicationId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidateId) and inputData.candidateId != null"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.newStatus) and inputData.newStatus != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "API_KEY"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/stage",
+          "headers": {},
+          "queryParams": {},
+          "contentType": null,
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed because this is dummy integration to support dependency fields for next integration.\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "avionte-add-application-to-nomiation",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "$"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-application-stage-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "nominationId",
+                "jsonataExpression": "0",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/stage",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"id\": $number(${nominationId}),\n  \"talentId\": $number(inputData.candidateId),\n  \"jobId\": $number(inputData.jobId)\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 503,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":503\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":400\n}"
+            },
+            {
+              "statusCode": 429,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":429\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "inputData.newStatus=\"Submitted\""
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "avionte-get-nomiation-id",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-application-stage-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "inputData.jobId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "inputData.candidateId",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/job/${jobId}/talent-stages",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"nominationId\": (\n    $matches := $filter($, function($stage) {\n      $stage.talentId=$number(${talentId}) and $stage.jobId = $number(${jobId})\n    });\n    $count($matches) > 0 ? $matches.id : 0\n  )\n}"
+            },
+            {
+              "statusCode": 503,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":503\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":400\n}"
+            },
+            {
+              "statusCode": 429,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":429\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "inputData.newStatus!=\"Submitted\""
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "avionte-application-nomiation-stage-change",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": null,
+            "resPassingJsonataExpression": "$"
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-get-nomiation-id",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "nominationId",
+                "jsonataExpression": "response.nominationId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "nominationId",
+                "jsonataExpression": "response.nominationId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "PUT",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/stage/${nominationId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"id\": $number(${nominationId}),\n  \"talentId\": $number(inputData.candidateId),\n  \"jobId\": $number(inputData.jobId),\n  \"jobActivityName\": inputData.newStatus\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 503,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":503\n}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":400\n}"
+            },
+            {
+              "statusCode": 429,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\n  \"errorMessage\": $string($),\n  \"statusCode\":429\n}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": $string($)}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "response.nominationId!=0"
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "inputData.newStatus!=\"Submitted\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WEBHOOK",
+      "integrations": [
+        {
+          "type": "WebhookIntegration",
+          "integrationId": "avionte-web-application-change-event",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "eventName & EventName != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "frontOfficeTenantId & FrontOfficeTenantId != \"\""
+            },
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(resource & Resource != \"\")"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": true
+        },
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "avionte-get-web-application",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "($match := $reduce($filter($, function($v) { $v.jobId = ${jobId} }), function($acc, $val) { $exists($acc) ? $acc : $val }); $exists($match) ? { \"atsApplicationId\": $string($match.webApplicantId), \"atsJobId\": $string($match.jobId), \"atsCandidateId\": $string($match.talentId), \"source\": $string($match.source), \"status\": \"NOT_SPECIFIED\", \"createdDate\": $match.applyDate, \"lastUpdatedDate\": $now(), \"insertedAt\": $now(), \"updatedAt\": $now()} : {})",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "$",
+            "targetFields": [
+              "JOVEO_APPLICATION_ID",
+              "JOVEO_APPLICATION_CUSTOMER_ID",
+              "JOVEO_APPLICATION_JOB_ID",
+              "JOVEO_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_ID",
+              "ATS_APPLICATION_JOB_ID",
+              "ATS_APPLICATION_CANDIDATE_ID",
+              "ATS_APPLICATION_SOURCE",
+              "ATS_APPLICATION_STATUS",
+              "ATS_APPLICATION_CREATED_DATE",
+              "ATS_APPLICATION_LAST_UPDATED_DATE",
+              "ATS_APPLICATION_INSERTED_AT",
+              "ATS_APPLICATION_UPDATED_AT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": {
+            "dependentIntegrationId": "avionte-web-application-change-event",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$contains(resource & Resource, '\"TalentId\"') ? $number($substringAfter($substringBefore(resource & Resource, ',\"CorrelationId\"'), '\"TalentId\":')) : 0",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "jobId",
+                "jsonataExpression": "$contains(resource & Resource, '\"JobId\"') ? $number($substringAfter($substringBefore(resource & Resource, ',\"TalentId\"'), '\"JobId\":')) : 0",
+                "restApiIntegrationContext": "API_RESPONSE_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": true,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/webapplicants/talent/${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": null,
+          "requestPayload": {
+            "requestBody": {}
+          },
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "APPLICATION",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateIdPost := Avionte_application_candidate_get_old[0].candidateId; \n$applicationIdPost := Avionte_application_application_post[0].applicationId; \n$customFields := function($keys) {\n    $merge($map($keys, function($key) {\n        {\n            $key: $lookup($, $key)\n        }\n    }))\n}; $exists($applicationIdPost) ? {\n    \"data\": {\n        \"candidateId\": $string($candidateIdPost),\n        \"applicationId\": $string($applicationIdPost),\n        \"customFields\": $\n    },\n    \"errors\": []\n} : {\n    \"data\": null,\n    \"errors\": [{\n        \"errorCode\": null,\n        \"errorType\": null,\n        \"message\": $string($),\n        \"params\": {}\n    }]\n})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "REST_API",
+      "integrations": [
+        {
+          "type": "ReadApiIntegration",
+          "integrationId": "salesforce-mindfield-get-candidates",
+          "responseConfig": {
+            "responseType": "ARRAY_OF_ENTITIES",
+            "jsonataExpression": "records",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($$) > 0"
+            }
+          ],
+          "dataModelTarget": {
+            "dataModelJsonataExpression": "[$map($$, function($candidate) { { \"atsCandidateId\": $candidate.Id, \"firstName\": $exists($candidate.First_Name__c) ? $candidate.First_Name__c : \"\", \"lastName\": $exists($candidate.Last_Name__c) ? $candidate.Last_Name__c : \"\", \"email\": $exists($candidate.Email__c) and $candidate.Email__c != null ? $candidate.Email__c : \"\", \"phoneNumbers\": (($exists($candidate.Phone_Mobile__c) and $candidate.Phone_Mobile__c != null and $candidate.Phone_Mobile__c != \"\") ? [{\"isPrimary\": true, \"countryCode\": null, \"phoneNumber\": $candidate.Phone_Mobile__c, \"customFields\": null}] : []) & (($exists($candidate.Phone_Personal__c) and $candidate.Phone_Personal__c != null and $candidate.Phone_Personal__c != \"\") ? [{\"isPrimary\": false, \"countryCode\": null, \"phoneNumber\": $candidate.Phone_Personal__c, \"customFields\": null}] : []), \"canEmail\": true, \"address\": {\"city\": $exists($candidate.City__c) ? $candidate.City__c : null, \"state\": $exists($candidate.Province_State__c) ? $candidate.Province_State__c : null, \"country\": $exists($candidate.Country__c) ? $candidate.Country__c : null, \"postalCode\": $exists($candidate.Postal_Code_Zip__c) ? $candidate.Postal_Code_Zip__c : null, \"customFields\": ($exists($candidate.Street__c) and $candidate.Street__c != null) ? {\"addressLine1\": $candidate.Street__c, \"addressLine2\": null} : null}, \"createdDate\": ($exists($candidate.CreatedDate) and $candidate.CreatedDate != null and $candidate.CreatedDate != \"\") ? $fromMillis($toMillis($replace($string($candidate.CreatedDate), /([+\\-]\\d{2})(\\d{2})$/, \"$1:$2\"))) : null, \"lastUpdatedDate\": ($exists($candidate.LastModifiedDate) and $candidate.LastModifiedDate != null and $candidate.LastModifiedDate != \"\") ? $fromMillis($toMillis($replace($string($candidate.LastModifiedDate), /([+\\-]\\d{2})(\\d{2})$/, \"$1:$2\"))) : null, \"insertedAt\": $now(), \"updatedAt\": $now(), \"customFields\": { \"Name\": $exists($candidate.Name) ? $candidate.Name : null, \"Phone_Mobile__c\": $exists($candidate.Phone_Mobile__c) ? $candidate.Phone_Mobile__c : null, \"Phone_Personal__c\": $exists($candidate.Phone_Personal__c) ? $candidate.Phone_Personal__c : null, \"record\": $candidate } } })]",
+            "targetFields": [
+              "JOVEO_CANDIDATE_ID",
+              "JOVEO_CANDIDATE_CUSTOMER_ID",
+              "ATS_CANDIDATE_ID",
+              "ATS_CANDIDATE_FIRST_NAME",
+              "ATS_CANDIDATE_LAST_NAME",
+              "ATS_CANDIDATE_EMAIL",
+              "ATS_CANDIDATE_PHONE_NUMBERS",
+              "ATS_CANDIDATE_CAN_EMAIL",
+              "ATS_CANDIDATE_ADDRESS",
+              "ATS_CANDIDATE_CREATED_DATE",
+              "ATS_CANDIDATE_LAST_UPDATED_DATE",
+              "ATS_CANDIDATE_INSERTED_AT",
+              "ATS_CANDIDATE_UPDATED_AT",
+              "ATS_CANDIDATE_IS_DELETED",
+              "ATS_CANDIDATE_CUSTOM_FIELDS",
+              "ATS_CANDIDATE_AUDIT"
+            ],
+            "targetOperation": "UPSERT"
+          },
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "${candidateGetUrl}",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "paginationConfig": {
+            "type": "ExpressionConfig",
+            "limitKey": "limit",
+            "limitValue": 200,
+            "jsonataExpressionMap": {
+              "candidateGetUrl": "$exists(nextRecordsUrl) ? nextRecordsUrl : \"services/data/v58.0/query/?q=SELECT+Id,Name,First_Name__c,Last_Name__c,Phone_Mobile__c,Email__c,Postal_Code_Zip__c,City__c,Province_State__c,Country__c,Phone_Personal__c,Street__c,CreatedDate,LastModifiedDate+FROM+Applicant__c+WHERE+LastModifiedDate+=+LAST_N_DAYS:30+ORDER+BY+LastModifiedDate+DESC\""
+            },
+            "paginationIndicatorJsonataExpression": "$exists(nextRecordsUrl)"
+          },
+          "requestPayload": null,
+          "dateRangeConfig": null,
+          "responseHandlers": [],
+          "executionEligibilityRules": []
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-post-start-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "($exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $exists(inputData.candidate.email) and inputData.candidate.email != null) or ($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-candidate-post-start-chain",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(inputData.candidate.atsCandidateId) = true and inputData.candidate.atsCandidateId != null ? \"/\" & inputData.candidate.atsCandidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\"firstName\": inputData.candidate.firstName,\"lastName\": inputData.candidate.lastName,\"mobilePhone\": inputData.candidate.phoneNumbers[0].phoneNumber,\"emailAddress\": inputData.candidate.email,\"origin\": inputData.candidate.customFields.orgin = null ? \"Joveo\" : inputData.candidate.customFields.orgin,\"status\": \"Online Applicant\",\"residentAddress\": {\"city\": inputData.candidate.address.city,\"postalCode\": inputData.candidate.address.postalCode, \"state_Province\": inputData.candidate.address.state, \"country\": inputData.candidate.address.country},\"talentResume\": ($exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null) ? {\"resumeFilename\": inputData.application.attachment.attachmentFileName,\"resumeContents\": inputData.application.attachment.attachmentContent} : null}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": false}"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": $number($split($substringAfter(matchedId, \": \"), \",\")[-1].$replace(\" \", \"\")),  \"existing\": true}"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": $string(inputData.candidate.atsCandidateId),  \"existing\": true}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.candidate.firstName) and inputData.candidate.firstName != null and $exists(inputData.candidate.lastName) and inputData.candidate.lastName != null and $not($exists(inputData.candidate.atsCandidateId) and inputData.candidate.atsCandidateId != null)"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-get-old",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-candidate-post",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null ? \"/\" & response.candidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "GET",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": null,
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": true, \"candidateObject\": $}"
+            },
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": true}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$merge([$, {\"errorMessage\": \"Again error with conflict\"}])"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": response.candidateId,  \"existing\": false }"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.existing) = true and response.existing = true and $exists(response.candidateId) = true and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-repost",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.candidateId) = true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-candidate-get-old",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "$exists(response.candidateId) = true and response.candidateId != null ? \"/\" & response.candidateId : \"\"",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent${talentId}",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$merge([response.candidateObject, {\"firstName\": inputData.candidate.firstName,\"lastName\": inputData.candidate.lastName,\"mobilePhone\": inputData.candidate.phoneNumbers[0].phoneNumber,\"emailAddress\": inputData.candidate.email,\"origin\": inputData.candidate.customFields.orgin = null ? \"Joveo\" : inputData.candidate.customFields.orgin,\"status\": \"Online Applicant\",\"residentAddress\": {\"city\": inputData.candidate.address.city,\"province\": inputData.candidate.address.city,\"postCode\": inputData.candidate.address.postalCode, \"country\": inputData.candidate.address.country},\"talentResume\": ($exists(inputData.application.attachment) and inputData.application.attachment != null and $exists(inputData.application.attachment.attachmentFileName) and inputData.application.attachment.attachmentFileName != null and $exists(inputData.application.attachment.attachmentContent) and inputData.application.attachment.attachmentContent != null) ? {\"resumeFilename\": inputData.application.attachment.attachmentFileName,\"resumeContents\": inputData.application.attachment.attachmentContent} : null}])",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "{ \"candidateId\": id,  \"existing\": false}"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(matchedId) and matchedId != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$merge([$, {\"errorMessage\": \"Again error with conflict\"}])"
+            },
+            {
+              "statusCode": 500,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\", \"candidateId\": response.candidateId}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(response.existing) = true and response.existing = true and $exists(response.candidateId) = true and response.candidateId != null"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-tags",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($keys(inputData.candidate.customFields.questionAnswers.additionalFields)) > 0 and $exists(response.candidateId)"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-candidate-repost",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_PATH"
+              },
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "candidateId",
+                "jsonataExpression": "response.candidateId",
+                "restApiIntegrationContext": "API_REQUEST_BODY"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${talentId}/talenttag",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "$map($keys(inputData.candidate.customFields.questionAnswers.additionalFields), function($key) { { \"talentId\": $number(response.candidateId), \"detail\": $key, \"tag\": $lookup(inputData.candidate.customFields.questionAnswers.additionalFields, $key) } })",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 201,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 409,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed at all\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$count($keys(inputData.candidate.customFields.questionAnswers.additionalFields)) > 0 and $exists(response.candidateId)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE",
+      "integrationType": "WRITE_API_RESPONSE_HANDLER",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Greenhouse-application-api-response-handler-chain",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {},
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "($candidateIdPost := Avionte_candidate_get_old[0].candidateId;$customFields := function($keys) {$merge($map($keys, function($key) {{ $key: $lookup($, $key) }}))};$exists($candidateIdPost) ? {\"data\": {\"candidateId\": $string($candidateIdPost),\"customFields\": $},\"errors\": []} : {\"data\": null,\"errors\": [{\"errorCode\": null,\"errorType\": null,\"message\": $string($),\"params\": {}}]})"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dataModel": "CANDIDATE_ACTIVITY",
+      "integrationType": "WRITE_REST_API",
+      "integrations": [
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-activity-start",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "inputData.name != null and inputData.notes != null and inputData.atsCandidateId != null"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": null,
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Integration not executed\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "false"
+            }
+          ]
+        },
+        {
+          "type": "WriteApiIntegration",
+          "integrationId": "Avionte-candidate-activity-post",
+          "responseConfig": {
+            "responseType": "SINGLE_ENTITY",
+            "jsonataExpression": "$",
+            "resPassingJsonataExpression": null
+          },
+          "dataModelRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "true"
+            }
+          ],
+          "dataModelTarget": null,
+          "integrationDependency": {
+            "dependentIntegrationId": "Avionte-candidate-activity-start",
+            "dependencyFields": [
+              {
+                "type": "RestApiIntegrationField",
+                "targetField": "talentId",
+                "jsonataExpression": "inputData.atsCandidateId",
+                "restApiIntegrationContext": "API_PATH"
+              }
+            ],
+            "jsonDataType": "TEXT_PRIMITIVE",
+            "queryType": "SINGLE_ENTITY"
+          },
+          "failSilently": false,
+          "method": "POST",
+          "authTypes": [
+            "OAUTH_2"
+          ],
+          "apiPath": "https://api.avionte.com/front-office/v1/talent/${talentId}/activity",
+          "headers": {
+            "Tenant": "${Tenant}",
+            "x-api-key": "${x-api-key}"
+          },
+          "queryParams": {},
+          "contentType": "APPLICATION_JSON",
+          "requestPayload": {
+            "requestBody": "{\n  \"typeId\": inputData.typeId,\n  \"name\": inputData.name,\n  \"notes\": inputData.notes,\n  \"userId\": inputData.userId,\n  \"activityDate\": inputData.activityDate\n}",
+            "requestBodyConverter": []
+          },
+          "responseHandlers": [
+            {
+              "statusCode": 200,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "$exists(id) and id != null"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 400,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "$"
+            },
+            {
+              "statusCode": 0,
+              "bodyRules": [
+                {
+                  "type": "BooleanExpressionRule",
+                  "jsonataExpression": "true"
+                }
+              ],
+              "jsonataConvertorExpression": "{\"errorMessage\": \"Activity not added\"}"
+            }
+          ],
+          "headersInResponse": false,
+          "executionEligibilityRules": [
+            {
+              "type": "BooleanExpressionRule",
+              "jsonataExpression": "$exists(inputData.name) = true and $exists(inputData.notes) = true"
+            }
+          ]
+        }
+      ]
+    }
+  ]

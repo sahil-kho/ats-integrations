@@ -1,0 +1,35 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://joveoapidemo.eploy.net",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "OAuth2Info",
+      "authContext": "API_HEADER",
+      "clientIdKey": "client_id",
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://joveoapidemo.eploy.net/api/token",
+        "tokenJsonataExpression": "\"Bearer \" & access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "authorization",
+      "grantTypeValue": "client_credentials",
+      "expiresInMillis": 1680000,
+      "additionalParams": {},
+      "customerOauthValues": {},
+      "encodedClientSecretKey": "client_secret",
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "OAUTH_2",
+    "lastDataSyncTime": "2025-08-07T18:40:03.675832885",
+    "nextDataSyncTime": "2025-08-07T18:40:03.67583333",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 1,
+    "dataSyncFrequencyInMinutes": 0
+  }

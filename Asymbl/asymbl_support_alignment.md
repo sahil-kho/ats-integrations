@@ -21,7 +21,7 @@
 ### JOB
 
 * atsJobId → Present (Id)
-* title → Present (Name)
+* title → Present (Name)s
 * status → Mapped (bpats__Job_Status__c)
 * department → Present (bpats__Department__r.Name)
 * locations → Present (city, state, country fields)

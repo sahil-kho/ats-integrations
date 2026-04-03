@@ -1,0 +1,35 @@
+{
+    "type": "RestApiCustomerIntegration",
+    "headers": {},
+    "timeZone": "UTC",
+    "zoneOffset": "Z",
+    "customerBaseUrl": "https://asymbl-joveo-tso.my.salesforce.com",
+    "queryParameters": {},
+    "customerAuthInfo": {
+      "type": "OAuth2Info",
+      "authContext": "API_HEADER",
+      "clientIdKey": "client_id",
+      "grantTypeKey": "grant_type",
+      "clientIdValue": "********",
+      "oauth2ApiInfo": {
+        "restMethod": "POST",
+        "contentType": "APPLICATION_FORM_URLENCODED",
+        "tokenGeneratorUrl": "https://asymbl-joveo-tso.my.salesforce.com/services/oauth2/token",
+        "tokenJsonataExpression": "\"Bearer \" & access_token"
+      },
+      "staticHeaders": {},
+      "accessTokenKey": "Authorization",
+      "grantTypeValue": "client_credentials",
+      "expiresInMillis": 0,
+      "additionalParams": {},
+      "customerOauthValues": {},
+      "encodedClientSecretKey": "client_secret",
+      "encodedClientSecretValue": "********"
+    },
+    "customerAuthType": "OAUTH_2",
+    "lastDataSyncTime": "2026-03-31T03:24:22.508809858",
+    "nextDataSyncTime": "2026-03-31T10:00:14.146964557",
+    "customerStaticValues": {},
+    "dataSyncFrequencyInHours": 6,
+    "dataSyncFrequencyInMinutes": 0
+  }
